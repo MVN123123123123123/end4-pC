@@ -60,7 +60,7 @@ Scope {
                     ? Config.options.bar.frameThickness
                     : normalExclusiveZone
                 WlrLayershell.namespace: "quickshell:verticalBar"
-                implicitWidth: Appearance.sizes.verticalBarWidth + Appearance.rounding.screenRounding
+                implicitWidth: Appearance.sizes.verticalBarWidth + Appearance.rounding.screenRounding + (Config.options.bar.cornerStyle === 3 ? (Appearance.sizes.hyprlandGapsOut || 5) : 0)
                 mask: Region { item: hoverMaskRegion }
                 color: "transparent"
 
@@ -71,20 +71,33 @@ Scope {
                     bottom: true
                 }
 
+                margins {
+                    top: 0
+                    bottom: 0
+                    left: 0
+                    right: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right ? -1 : 0)
+                }
+
                 Component.onCompleted: { GlobalFocusGrab.addPersistent(barRoot); }
                 Component.onDestruction: { GlobalFocusGrab.removePersistent(barRoot); }
 
                 MouseArea {
                     id: hoverRegion
                     hoverEnabled: true
-                    anchors.fill: parent
+                    anchors {
+                        fill: parent
+                        rightMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right ? 1 : 0)
+                    }
 
                     Item {
                         id: hoverMaskRegion
                         anchors {
-                            fill: barContent
-                            leftMargin: -Config.options.bar.autoHide.hoverRegionWidth
-                            rightMargin: -Config.options.bar.autoHide.hoverRegionWidth
+                            top: parent.top
+                            bottom: parent.bottom
+                            left: !Config.options.bar.bottom ? parent.left : barContent.left
+                            right: Config.options.bar.bottom ? parent.right : barContent.right
+                            leftMargin: Config.options.bar.bottom ? -Config.options.bar.autoHide.hoverRegionWidth : 0
+                            rightMargin: !Config.options.bar.bottom ? -Config.options.bar.autoHide.hoverRegionWidth : 0
                         }
                     }
 
@@ -184,7 +197,7 @@ Scope {
                                 target: barContent
                                 anchors.topMargin: 0
                                 anchors.rightMargin: (Config?.options.bar.autoHide.enable && !mustShow)
-                                    ? -Appearance.sizes.barHeight
+                                    ? -Appearance.sizes.verticalBarWidth
                                     : (Config.options.bar.cornerStyle === 3 ? (Appearance.sizes.hyprlandGapsOut || 5) : 0)
                             }
                         }

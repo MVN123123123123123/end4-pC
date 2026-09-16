@@ -43,6 +43,8 @@ ContentPage {
             : path
     }
 
+    readonly property bool isVideoWallpaper: Images.isVideoByName(Config.options.background.wallpaperPath)
+
     ColumnLayout {
         id: mainLayout 
         Layout.fillWidth: true   
@@ -374,6 +376,150 @@ ContentPage {
                         stopIndicatorValues: [400]
                         onValueChanged: {
                             Config.options.background.centeredWallpaperSize = value;
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Video wallpaper")
+                Layout.fillWidth: true
+                visible: page.isVideoWallpaper
+                enabled: page.isVideoWallpaper
+
+                Timer {
+                    id: videoReloadTimer
+                    interval: 200
+                    repeat: false
+                    onTriggered: Wallpapers.reloadVideoWallpaper()
+                }
+
+                GroupedList {
+                    ConfigSelectionArray {
+                        text: Translation.tr("Fit mode")
+                        icon: "fit_screen"
+                        currentValue: Config.options.background.video.fitMode || "crop"
+                        options: [
+                            { "displayName": Translation.tr("Fill / Crop"), "icon": "crop", "value": "crop" },
+                            { "displayName": Translation.tr("Fit / Aspect"), "icon": "fit_screen", "value": "fit" },
+                            { "displayName": Translation.tr("Stretch"), "icon": "aspect_ratio", "value": "stretch" },
+                        ]
+                        onSelected: newValue => {
+                            Config.options.background.video.fitMode = newValue;
+                            videoReloadTimer.restart();
+                        }
+                    }
+
+                    ConfigSlider {
+                        text: Translation.tr("Zoom")
+                        textWidth: 160
+                        buttonIcon: "zoom_in"
+                        usePercentTooltip: false
+                        from: 20
+                        to: 300
+                        stepSize: 5
+                        value: Math.round((Config.options.background.video.scale || 1.0) * 100)
+                        stopIndicatorValues: [100]
+                        onMoved: {
+                            const newScale = Math.round(value) / 100.0;
+                            if (Config.options.background.video.scale !== newScale) {
+                                Config.options.background.video.scale = newScale;
+                                videoReloadTimer.restart();
+                            }
+                        }
+                    }
+
+                    ConfigSelectionArray {
+                        text: Translation.tr("Horizontal alignment")
+                        icon: "align_horizontal_center"
+                        currentValue: Config.options.background.video.alignX < -0.33 ? "left" : (Config.options.background.video.alignX > 0.33 ? "right" : "center")
+                        options: [
+                            { "displayName": Translation.tr("Left"), "icon": "align_horizontal_left", "value": "left" },
+                            { "displayName": Translation.tr("Center"), "icon": "align_horizontal_center", "value": "center" },
+                            { "displayName": Translation.tr("Right"), "icon": "align_horizontal_right", "value": "right" },
+                        ]
+                        onSelected: newValue => {
+                            if (newValue === "left") Config.options.background.video.alignX = -1.0;
+                            else if (newValue === "right") Config.options.background.video.alignX = 1.0;
+                            else Config.options.background.video.alignX = 0.0;
+                            videoReloadTimer.restart();
+                        }
+                    }
+
+                    ConfigSlider {
+                        text: Translation.tr("Horizontal fine offset")
+                        textWidth: 160
+                        buttonIcon: "swap_horiz"
+                        usePercentTooltip: false
+                        from: -100
+                        to: 100
+                        stepSize: 1
+                        value: Math.round((Config.options.background.video.alignX || 0.0) * 100)
+                        stopIndicatorValues: [0]
+                        onMoved: {
+                            const newAlign = Math.round(value) / 100.0;
+                            if (Config.options.background.video.alignX !== newAlign) {
+                                Config.options.background.video.alignX = newAlign;
+                                videoReloadTimer.restart();
+                            }
+                        }
+                    }
+
+                    ConfigSelectionArray {
+                        text: Translation.tr("Vertical alignment")
+                        icon: "align_vertical_center"
+                        currentValue: Config.options.background.video.alignY < -0.33 ? "top" : (Config.options.background.video.alignY > 0.33 ? "bottom" : "center")
+                        options: [
+                            { "displayName": Translation.tr("Top"), "icon": "align_vertical_top", "value": "top" },
+                            { "displayName": Translation.tr("Center"), "icon": "align_vertical_center", "value": "center" },
+                            { "displayName": Translation.tr("Bottom"), "icon": "align_vertical_bottom", "value": "bottom" },
+                        ]
+                        onSelected: newValue => {
+                            if (newValue === "top") Config.options.background.video.alignY = -1.0;
+                            else if (newValue === "bottom") Config.options.background.video.alignY = 1.0;
+                            else Config.options.background.video.alignY = 0.0;
+                            videoReloadTimer.restart();
+                        }
+                    }
+
+                    ConfigSlider {
+                        text: Translation.tr("Vertical fine offset")
+                        textWidth: 160
+                        buttonIcon: "swap_vert"
+                        usePercentTooltip: false
+                        from: -100
+                        to: 100
+                        stepSize: 1
+                        value: Math.round((Config.options.background.video.alignY || 0.0) * 100)
+                        stopIndicatorValues: [0]
+                        onMoved: {
+                            const newAlign = Math.round(value) / 100.0;
+                            if (Config.options.background.video.alignY !== newAlign) {
+                                Config.options.background.video.alignY = newAlign;
+                                videoReloadTimer.restart();
+                            }
+                        }
+                    }
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: "volume_off"
+                        text: Translation.tr("Mute audio")
+                        checked: Config.options.background.video.mute !== false
+                        onCheckedChanged: {
+                            Config.options.background.video.mute = checked;
+                            videoReloadTimer.restart();
+                        }
+                    }
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: "loop"
+                        text: Translation.tr("Loop video")
+                        checked: Config.options.background.video.loop !== false
+                        onCheckedChanged: {
+                            Config.options.background.video.loop = checked;
+                            videoReloadTimer.restart();
                         }
                     }
                 }

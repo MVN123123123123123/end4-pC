@@ -12,7 +12,8 @@ Item {
 
     required property var fileModelData
     property bool isDirectory: fileModelData ? Boolean(fileModelData.fileIsDir) : false
-    property bool useThumbnail: fileModelData ? Images.isValidImageByName(fileModelData.fileName) : false
+    property bool isVideo: fileModelData ? Images.isVideoByName(fileModelData.fileName) : false
+    property bool useThumbnail: fileModelData ? (Images.isValidImageByName(fileModelData.fileName) || isVideo) : false
     property alias colBackground: background.color
     property alias colText: wallpaperItemName.color
     property alias radius: background.radius
@@ -128,6 +129,28 @@ Item {
                         sourceSize.height: wallpaperItemColumnLayout.height - wallpaperItemColumnLayout.spacing - wallpaperItemName.height
                     }
 
+                }
+
+                Rectangle {
+                    id: videoBadge
+                    visible: root.isVideo
+                    anchors {
+                        top: parent.top
+                        right: parent.right
+                        margins: 6
+                    }
+                    width: 24
+                    height: 24
+                    radius: Appearance.rounding.full
+                    color: Appearance.colors.colLayer0
+                    opacity: 0.85
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "movie"
+                        iconSize: 14
+                        color: Appearance.colors.colPrimary
+                    }
                 }
 
             }

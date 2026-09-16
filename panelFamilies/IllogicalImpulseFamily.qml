@@ -52,5 +52,5 @@ Scope {
     PanelLoader { component: DesktopMenu {} }
     PanelLoader { component: DropShelfPanel {} }
     PanelLoader { component: NiriBackdrop {} }
-    PanelLoader { component: ScreenFrame {} }
+    PanelLoader { extraCondition: Config.options.bar.showFrame; component: ScreenFrame {} }
 }

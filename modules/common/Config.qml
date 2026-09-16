@@ -408,6 +408,15 @@ Singleton {
                     property bool enableSidebar: true
                     property real widgetsFactor: 1.2
                 }
+                property JsonObject video: JsonObject {
+                    property string fitMode: "crop" // "crop", "fit", "stretch"
+                    property real scale: 1.0        // 0.5 to 2.5 (1.0 = 100%)
+                    property real zoom: 0.0         // mpv video-zoom (log2 scale)
+                    property real alignX: 0.0       // -1.0 (left) to 1.0 (right), 0.0 center
+                    property real alignY: 0.0       // -1.0 (top) to 1.0 (bottom), 0.0 center
+                    property bool mute: true
+                    property bool loop: true
+                }
             }
 
             property JsonObject bar: JsonObject {

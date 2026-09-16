@@ -87,7 +87,7 @@ Scope {
                 // Overlay layer only while special workspace sits on top of a fullscreen window on this monitor,
                 // else Top layer so fullscreen apps cover the bar as normal (Hyprland buries Top layer under fullscreen+special).
                 WlrLayershell.layer: (monitorHasFullscreen && monitorHasSpecialOpen) ? WlrLayer.Overlay : WlrLayer.Top
-                implicitHeight: Appearance.sizes.barHeight + Appearance.rounding.screenRounding
+                implicitHeight: Appearance.sizes.barHeight + Appearance.rounding.screenRounding + (Config.options.bar.cornerStyle === 3 ? 5 : 0)
                 // When Overlay-layer, bar shares a layer with the screen-corner click zones (ScreenCorners.qml)
                 // and same-layer overlap is resolved by stacking, not layer priority - bar was winning and
                 // swallowing the tiny corner-open hit rects. Carve them out of the bar's own mask so clicks
@@ -123,9 +123,10 @@ Scope {
                 }
 
                 margins {
-                    top: Config.options.bar.cornerStyle === 3 ? 5 : 0
-                    right: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right) * -1
-                    bottom: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.bottom) * -1 || Config.options.bar.cornerStyle === 3 ? 5 : 0
+                    top: 0
+                    left: 0
+                    right: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right ? -1 : 0)
+                    bottom: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.bottom ? -1 : 0)
                 }
 
                 // Include in focus grab
@@ -141,16 +142,19 @@ Scope {
                     hoverEnabled: true
                     anchors {
                         fill: parent
-                        rightMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right) * 1
-                        bottomMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.bottom) * 1
+                        rightMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right ? 1 : 0)
+                        bottomMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.bottom ? 1 : 0)
                     }
 
                     Item {
                         id: hoverMaskRegion
                         anchors {
-                            fill: barContent
-                            topMargin: -Config.options.bar.autoHide.hoverRegionWidth
-                            bottomMargin: -Config.options.bar.autoHide.hoverRegionWidth
+                            left: parent.left
+                            right: parent.right
+                            top: !Config.options.bar.bottom ? parent.top : barContent.top
+                            bottom: Config.options.bar.bottom ? parent.bottom : barContent.bottom
+                            topMargin: Config.options.bar.bottom ? -Config.options.bar.autoHide.hoverRegionWidth : 0
+                            bottomMargin: !Config.options.bar.bottom ? -Config.options.bar.autoHide.hoverRegionWidth : 0
                         }
                     }
 
@@ -163,9 +167,11 @@ Scope {
                             left: parent.left
                             top: parent.top
                             bottom: undefined
-                            topMargin: (Config?.options.bar.autoHide.enable && !mustShow) ? -Appearance.sizes.barHeight : 0
-                            bottomMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.bottom) * -1
-                            rightMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right) * -1
+                            topMargin: (Config?.options.bar.autoHide.enable && !mustShow) 
+                                ? -Appearance.sizes.barHeight 
+                                : (Config.options.bar.cornerStyle === 3 ? 5 : 0)
+                            bottomMargin: 0
+                            rightMargin: 0
                         }
                         Behavior on anchors.topMargin {
                             animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
@@ -189,7 +195,9 @@ Scope {
                             PropertyChanges {
                                 target: barContent
                                 anchors.topMargin: 0
-                                anchors.bottomMargin: (Config?.options.bar.autoHide.enable && !mustShow) ? -Appearance.sizes.barHeight : 0
+                                anchors.bottomMargin: (Config?.options.bar.autoHide.enable && !mustShow) 
+                                    ? -Appearance.sizes.barHeight 
+                                    : (Config.options.bar.cornerStyle === 3 ? 5 : 0)
                             }
                         }
                     }

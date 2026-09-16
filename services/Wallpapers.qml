@@ -32,9 +32,21 @@ Singleton {
     property var orderMap: ({})
     property bool orderLoaded: false
     property string searchQuery: ""
-    readonly property list<string> extensions: [ // TODO: add videos
-        "jpg", "jpeg", "png", "webp", "avif", "bmp", "svg"
+    readonly property list<string> extensions: [
+        "jpg", "jpeg", "png", "webp", "avif", "bmp", "svg",
+        "mp4", "webm", "mkv", "avi", "mov"
     ]
+    readonly property list<string> videoExtensions: [
+        "mp4", "webm", "mkv", "avi", "mov"
+    ]
+    function isVideo(path) {
+        if (!path) return false;
+        const clean = FileUtils.trimFileProtocol(path).toLowerCase();
+        return videoExtensions.some(ext => clean.endsWith("." + ext));
+    }
+    function reloadVideoWallpaper() {
+        Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--reload-video"]);
+    }
     property list<string> wallpapers: [] // List of absolute file paths (without file://)
     readonly property bool thumbnailGenerationRunning: thumbgenProc.running
     property real thumbnailGenerationProgress: 0
@@ -449,6 +461,10 @@ Singleton {
 
         function apply(path: string): void {
             root.apply(path);
+        }
+
+        function setDirectory(path: string): void {
+            root.setDirectory(path);
         }
 
         function setSortMode(mode: string): void {

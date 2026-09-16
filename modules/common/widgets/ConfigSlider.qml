@@ -15,10 +15,13 @@ RowLayout {
     property alias value: slider.value
     property alias stopIndicatorValues: slider.stopIndicatorValues
     property bool usePercentTooltip: true
-    property real from: slider.from
-    property real to: slider.to
+    property alias from: slider.from
+    property alias to: slider.to
+    property alias stepSize: slider.stepSize
     property real textWidth: 120
     property bool showLabel: true
+
+    signal moved()
 
     RowLayout {
         id: row
@@ -41,8 +44,6 @@ RowLayout {
         id: slider
         configuration: StyledSlider.Configuration.XS
         usePercentTooltip: root.usePercentTooltip
-        value: root.value
-        from: root.from
-        to: root.to
+        onMoved: root.moved()
     }
 }
