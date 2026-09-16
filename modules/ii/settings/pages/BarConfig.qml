@@ -725,9 +725,15 @@ ContentPage {
             icon: "tooltip"; title: Translation.tr("Tooltips")
             GroupedList {
                 ConfigSwitch {
+                    buttonIcon: "visibility"; text: Translation.tr("Enable")
+                    checked: Config.options.bar.tooltips.enable
+                    onCheckedChanged: { Config.options.bar.tooltips.enable = checked; }
+                }
+                ConfigSwitch {
                     buttonIcon: "ads_click"; text: Translation.tr("Click to show")
                     checked: Config.options.bar.tooltips.clickToShow
                     onCheckedChanged: { Config.options.bar.tooltips.clickToShow = checked; }
+                    enabled: Config.options.bar.tooltips.enable
                 }
             }
         }
