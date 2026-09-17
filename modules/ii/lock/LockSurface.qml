@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtMultimedia
 import Qt5Compat.GraphicalEffects
 import Quickshell.Services.UPower
 import Quickshell.Services.Mpris
@@ -118,21 +119,55 @@ MouseArea {
         sourceComponent: Item {
             anchors.fill: parent
 
+            readonly property string effectiveWall: (GlobalStates.screenLocked && Config.options.background.lockWall !== "")
+                ? Config.options.background.lockWall
+                : Config.options.background.wallpaperPath
+            readonly property bool isVideo: Images.isVideoByName(effectiveWall)
+
+            MediaPlayer {
+                id: lockVideoPlayer
+                source: isVideo
+                    ? ("file://" + FileUtils.trimFileProtocol(effectiveWall))
+                    : ""
+                videoOutput: lockVideoOutput
+                loops: MediaPlayer.Infinite
+                audioOutput: AudioOutput { muted: true }
+                onSourceChanged: {
+                    if (source.toString() !== "") {
+                        play();
+                    } else {
+                        stop();
+                    }
+                }
+                Component.onCompleted: {
+                    if (source.toString() !== "") play();
+                }
+            }
+
+            VideoOutput {
+                id: lockVideoOutput
+                anchors.fill: parent
+                fillMode: VideoOutput.PreserveAspectCrop
+                visible: isVideo
+            }
+
             Image {
                 id: lockBgSource
                 anchors.fill: parent
-                source: Images.isVideoByName(Config.options.background.wallpaperPath)
-                    ? Config.options.background.thumbnailPath
-                    : Config.options.background.wallpaperPath
+                source: !isVideo
+                    ? effectiveWall
+                    : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true
-                visible: false
+                visible: !isVideo
             }
+
             FastBlur {
                 anchors.fill: parent
-                source: lockBgSource
-                radius: 0 // fixme
+                source: isVideo ? lockVideoOutput : lockBgSource
+                radius: Config.options.lock.blur.enable ? Config.options.lock.blur.radius : 0
+                visible: Config.options.lock.blur.enable
             }
         }
     }

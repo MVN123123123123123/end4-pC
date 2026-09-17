@@ -202,18 +202,6 @@ Variants {
             }
         }
 
-        Connections {
-            target: Config.options.background.video
-            function onMuteChanged() {
-                if (videoPlayer.audioOutput) {
-                    videoPlayer.audioOutput.muted = (Config.options.background.video.mute !== false) || (bgRoot.screen !== Quickshell.screens[0]);
-                }
-            }
-            function onLoopChanged() {
-                videoPlayer.loops = Config.options.background.video.loop !== false ? MediaPlayer.Infinite : 1;
-            }
-        }
-
         Item {
             anchors.fill: parent
             opacity: bgRoot.hiddenForFullscreen ? 0 : 1
@@ -229,9 +217,9 @@ Variants {
                     ? ("file://" + CF.FileUtils.trimFileProtocol(bgRoot.effectiveWallpaperPath))
                     : ""
                 videoOutput: videoWallpaper
-                loops: Config.options.background.video.loop !== false ? MediaPlayer.Infinite : 1
+                loops: (Config.options.background.video?.loop !== false) ? MediaPlayer.Infinite : 1
                 audioOutput: AudioOutput {
-                    muted: (Config.options.background.video.mute !== false) || (bgRoot.screen !== Quickshell.screens[0])
+                    muted: (Config.options.background.video?.mute !== false) || (bgRoot.screen !== Quickshell.screens[0])
                 }
                 onSourceChanged: {
                     if (source.toString() !== "") {
@@ -267,64 +255,59 @@ Variants {
                 opacity: centeredWallpaper.centeredFullWallpaperOpacity()
                 clip: true
 
+                readonly property real baseW: width
+                readonly property real baseH: height
+                readonly property real scale: Config.options.background.video?.scale || 1.0
+                readonly property real alignX: Config.options.background.video?.alignX || 0.0
+                readonly property real alignY: Config.options.background.video?.alignY || 0.0
+                readonly property string fitMode: Config.options.background.video?.fitMode || "crop"
+
+                readonly property real vidW: videoWallpaper.implicitWidth > 0 ? videoWallpaper.implicitWidth : (videoWallpaper.sourceRect.width > 0 ? videoWallpaper.sourceRect.width : baseW)
+                readonly property real vidH: videoWallpaper.implicitHeight > 0 ? videoWallpaper.implicitHeight : (videoWallpaper.sourceRect.height > 0 ? videoWallpaper.sourceRect.height : baseH)
+                readonly property real vidAspect: (vidH > 0 && vidW > 0) ? (vidW / vidH) : (baseW / baseH)
+                readonly property real scrAspect: (baseH > 0 && baseW > 0) ? (baseW / baseH) : 1.0
+
+                readonly property real effW: {
+                    if (fitMode === "stretch") return baseW * scale;
+                    if (fitMode === "fit") {
+                        return (vidAspect > scrAspect ? baseW : baseH * vidAspect) * scale;
+                    }
+                    return (vidAspect > scrAspect ? baseH * vidAspect : baseW) * scale;
+                }
+
+                readonly property real effH: {
+                    if (fitMode === "stretch") return baseH * scale;
+                    if (fitMode === "fit") {
+                        return (vidAspect > scrAspect ? baseW / vidAspect : baseH) * scale;
+                    }
+                    return (vidAspect > scrAspect ? baseH : baseW / vidAspect) * scale;
+                }
+
+                readonly property real maxPanX: Math.max(0, (effW - baseW) / 2)
+                readonly property real maxPanY: Math.max(0, (effH - baseH) / 2)
+
+                readonly property real panX: -alignX * maxPanX
+                readonly property real panY: -alignY * maxPanY
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "black"
+                    z: -1
+                }
+
                 VideoOutput {
                     id: videoWallpaper
-                    property real panX: videoTranslate.x
-                    property real panY: videoTranslate.y
+                    property real panX: videoContainer.panX
+                    property real panY: videoContainer.panY
                     anchors.centerIn: parent
-                    width: parent.width
-                    height: parent.height
-                    fillMode: {
-                        const m = Config.options.background.video.fitMode || "crop"
-                        if (m === "fit") return VideoOutput.PreserveAspectFit
-                        if (m === "stretch") return VideoOutput.Stretch
-                        return VideoOutput.PreserveAspectCrop
-                    }
-                    scale: Config.options.background.video.scale || 1.0
+                    width: videoContainer.effW
+                    height: videoContainer.effH
+                    fillMode: videoContainer.fitMode === "stretch" ? VideoOutput.Stretch : VideoOutput.PreserveAspectCrop
                     transformOrigin: Item.Center
 
                     transform: Translate {
-                        id: videoTranslate
-                        x: {
-                            const ax = Config.options.background.video.alignX || 0.0;
-                            const s = videoWallpaper.scale;
-                            const baseW = videoContainer.width;
-                            const baseH = videoContainer.height;
-                            const vidW = videoWallpaper.sourceRect.width || baseW;
-                            const vidH = videoWallpaper.sourceRect.height || baseH;
-                            const m = Config.options.background.video.fitMode || "crop";
-
-                            let effW = baseW * s;
-                            if (m === "crop" && vidH > 0) {
-                                const vidAspect = vidW / vidH;
-                                const scrAspect = baseW / baseH;
-                                if (vidAspect > scrAspect) {
-                                    effW = baseH * vidAspect * s;
-                                }
-                            }
-                            const maxPanX = Math.max(0, (effW - baseW) / 2);
-                            return -ax * maxPanX;
-                        }
-                        y: {
-                            const ay = Config.options.background.video.alignY || 0.0;
-                            const s = videoWallpaper.scale;
-                            const baseW = videoContainer.width;
-                            const baseH = videoContainer.height;
-                            const vidW = videoWallpaper.sourceRect.width || baseW;
-                            const vidH = videoWallpaper.sourceRect.height || baseH;
-                            const m = Config.options.background.video.fitMode || "crop";
-
-                            let effH = baseH * s;
-                            if (m === "crop" && vidW > 0) {
-                                const vidAspect = vidW / vidH;
-                                const scrAspect = baseW / baseH;
-                                if (vidAspect < scrAspect) {
-                                    effH = (baseW / vidAspect) * s;
-                                }
-                            }
-                            const maxPanY = Math.max(0, (effH - baseH) / 2);
-                            return -ay * maxPanY;
-                        }
+                        x: videoContainer.panX
+                        y: videoContainer.panY
                     }
                 }
             }
@@ -343,6 +326,8 @@ Variants {
 
             StyledImage {
                 id: wallpaper
+                property real panX: 0
+                property real panY: 0
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectCrop
                 cache: true

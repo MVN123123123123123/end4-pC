@@ -298,10 +298,10 @@ switch() {
             if [[ -z "$colors_only_flag" ]]; then
                 set_wallpaper_path "$imgpath"
 
+                local video_path="$imgpath"
+                local video_opts
+                video_opts="$(get_video_opts)"
                 if ! pidof qs &>/dev/null && ! pidof quickshell &>/dev/null; then
-                    local video_path="$imgpath"
-                    local video_opts
-                    video_opts="$(get_video_opts)"
                     monitors=$(hyprctl monitors -j | jq -r '.[] | .name')
                     for monitor in $monitors; do
                         setsid mpvpaper -o "$video_opts" "$monitor" "$video_path" >/dev/null 2>&1 &

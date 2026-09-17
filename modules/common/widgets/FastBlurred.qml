@@ -38,6 +38,14 @@ Item {
             sourceRect: {
                 var _fx = root.trackX
                 var _fy = root.trackY
+                var _rx = root.x
+                var _ry = root.y
+                var _rw = root.width
+                var _rh = root.height
+                var _prx = root.parent ? root.parent.x : 0
+                var _pry = root.parent ? root.parent.y : 0
+                var _prw = root.parent ? root.parent.width : 0
+                var _prh = root.parent ? root.parent.height : 0
                 if (!root.blurSource) return Qt.rect(0, 0, 0, 0)
                 var _bs = root.blurSource.scale
                 var _bw = root.blurSource.width
