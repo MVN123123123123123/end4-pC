@@ -334,7 +334,9 @@ Item {
                         Image {
                             id: ovBgSource
                             anchors.fill: parent
-                            source: Config.options.background.wallpaperPath
+                            source: Images.isVideoByName(Config.options.background.wallpaperPath)
+                                ? Config.options.background.thumbnailPath
+                                : Config.options.background.wallpaperPath
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                             cache: true

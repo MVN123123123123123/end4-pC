@@ -39,8 +39,9 @@ Item {
                 var _fx = root.trackX
                 var _fy = root.trackY
                 if (!root.blurSource) return Qt.rect(0, 0, 0, 0)
-                var pt = root.mapToItem(root.blurSource, -root.oversample, -root.oversample)
-                return Qt.rect(pt.x, pt.y, blur.width, blur.height)
+                var p1 = root.mapToItem(root.blurSource, -root.oversample, -root.oversample)
+                var p2 = root.mapToItem(root.blurSource, root.width + root.oversample, root.height + root.oversample)
+                return Qt.rect(Math.min(p1.x, p2.x), Math.min(p1.y, p2.y), Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y))
             }
             hideSource: false
             live: true

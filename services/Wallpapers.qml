@@ -44,7 +44,9 @@ Singleton {
         const clean = FileUtils.trimFileProtocol(path).toLowerCase();
         return videoExtensions.some(ext => clean.endsWith("." + ext));
     }
+    signal videoWallpaperReloadRequested()
     function reloadVideoWallpaper() {
+        root.videoWallpaperReloadRequested();
         Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--reload-video"]);
     }
     property list<string> wallpapers: [] // List of absolute file paths (without file://)

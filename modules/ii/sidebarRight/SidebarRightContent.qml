@@ -174,7 +174,9 @@ Item {
                                     fillMode: Image.PreserveAspectCrop
                                     source: Config.options.sidebar.bannerImage !== "" 
                                         ? Config.options.sidebar.bannerImage 
-                                        : Config.options.background.wallpaperPath
+                                        : (Images.isVideoByName(Config.options.background.wallpaperPath)
+                                            ? Config.options.background.thumbnailPath
+                                            : Config.options.background.wallpaperPath)
                                     cache: false
                                     antialiasing: true
                                     sourceSize.width: wallpaperRect.width * 2

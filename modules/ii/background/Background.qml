@@ -8,6 +8,7 @@ import qs.modules.common.widgets.widgetCanvas
 import qs.modules.common.functions as CF
 import QtQuick
 import QtQuick.Layouts
+import QtMultimedia
 import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
@@ -24,7 +25,6 @@ Variants {
         required property var modelData
         property string currentWallpaperSource: Config.options.background.wallpaperPath
         property string previousWallpaperSource: Config.options.background.wallpaperPath
-        property bool videoRevealed: false
 
         readonly property real splitFraction: {
             switch (Config.options.background.splitRatio) {
@@ -34,7 +34,7 @@ Variants {
             }
         }
         readonly property bool overviewBlurActive: Config.options.overview.style === "niri" && GlobalStates.overviewOpen && Config.options.overview.enable
-        readonly property bool userBlurActive: Config.options.background.showBlur && !bgRoot.wallpaperIsVideo
+        readonly property bool userBlurActive: Config.options.background.showBlur
         readonly property bool blurFullScreen: bgRoot.overviewBlurActive || bgRoot.splitFraction >= 1.0
 
         property var shaderList: ["circlePit", "circleSelect", "magic", "Doom", "Peel", "transition", "pixelate", "stripes", "crt", "dissolve", "glitch", "ripple", "shatter"]
@@ -114,25 +114,34 @@ Variants {
                     ? bgRoot.shaderList[Math.floor(Math.random() * bgRoot.shaderList.length)]
                     : bgRoot.wallpaperAnimation
             }
-            bgRoot.videoRevealed = bgRoot.wallpaperIsVideo
+            if (bgRoot.wallpaperIsVideo) {
+                videoPlayer.play()
+            }
         }
 
         onWallpaperPathChanged: {
-            bgRoot.videoRevealed = false
             if (wallpaperSafetyTriggered) {
                 bgRoot.transitionPending = false
                 previousWallpaper.source = ""
                 wallpaper.source = ""
+                videoPlayer.stop()
                 bgRoot.transitionProgress = 1.0
                 return
+            }
+            if (bgRoot.wallpaperIsVideo) {
+                bgRoot.transitionPending = false
+                videoPlayer.source = "file://" + CF.FileUtils.trimFileProtocol(bgRoot.effectiveWallpaperPath)
+                videoPlayer.play()
+                return
+            } else {
+                videoPlayer.stop()
+                videoPlayer.source = ""
             }
             if (bgRoot.wallpaperAnimation === "") {
                 bgRoot.transitionPending = false
                 wallpaper.source = wallpaperPath
                 previousWallpaper.source = wallpaperPath
                 bgRoot.currentWallpaperSource = wallpaperPath
-                if (!bgRoot.wallpaperIsVideo) return
-                bgRoot.videoRevealed = true
                 return
             }
 
@@ -164,7 +173,6 @@ Variants {
                 previousWallpaper.source = bgRoot.currentWallpaperSource
                 bgRoot.previousWallpaperSource = ""
                 bgRoot.transitionProgress = 1.0
-                bgRoot.videoRevealed = bgRoot.wallpaperIsVideo
             }
         }
 
@@ -190,11 +198,24 @@ Variants {
         }
 
         Connections {
-            target: GlobalStates
-            function onScreenLockedChanged() {
-                if (!GlobalStates.screenLocked) {
-                    bgRoot.videoRevealed = bgRoot.wallpaperIsVideo
+            target: Wallpapers
+            function onVideoWallpaperReloadRequested() {
+                if (bgRoot.wallpaperIsVideo) {
+                    videoPlayer.stop();
+                    videoPlayer.play();
                 }
+            }
+        }
+
+        Connections {
+            target: Config.options.background.video
+            function onMuteChanged() {
+                if (videoPlayer.audioOutput) {
+                    videoPlayer.audioOutput.muted = (Config.options.background.video.mute !== false) || (bgRoot.screen !== Quickshell.screens[0]);
+                }
+            }
+            function onLoopChanged() {
+                videoPlayer.loops = Config.options.background.video.loop !== false ? MediaPlayer.Infinite : 1;
             }
         }
 
@@ -207,6 +228,101 @@ Variants {
                 NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
             }
 
+            MediaPlayer {
+                id: videoPlayer
+                source: bgRoot.wallpaperIsVideo ? ("file://" + CF.FileUtils.trimFileProtocol(bgRoot.effectiveWallpaperPath)) : ""
+                videoOutput: videoWallpaper
+                loops: Config.options.background.video.loop !== false ? MediaPlayer.Infinite : 1
+                audioOutput: AudioOutput {
+                    muted: (Config.options.background.video.mute !== false) || (bgRoot.screen !== Quickshell.screens[0])
+                }
+                Component.onCompleted: {
+                    if (bgRoot.wallpaperIsVideo) play()
+                }
+                onErrorOccurred: (error, errorString) => {
+                    console.warn("[Background] Video player error:", error, errorString)
+                }
+            }
+
+            Connections {
+                target: bgRoot
+                function onHiddenForFullscreenChanged() {
+                    if (!bgRoot.wallpaperIsVideo) return;
+                    if (bgRoot.hiddenForFullscreen) {
+                        videoPlayer.pause();
+                    } else {
+                        videoPlayer.play();
+                    }
+                }
+            }
+
+            Item {
+                id: videoContainer
+                anchors.fill: parent
+                visible: bgRoot.wallpaperIsVideo && !centeredWallpaper.centeredHidesFullWallpaper
+                opacity: centeredWallpaper.centeredFullWallpaperOpacity()
+                clip: true
+
+                VideoOutput {
+                    id: videoWallpaper
+                    anchors.centerIn: parent
+                    width: parent.width
+                    height: parent.height
+                    fillMode: {
+                        const m = Config.options.background.video.fitMode || "crop"
+                        if (m === "fit") return VideoOutput.PreserveAspectFit
+                        if (m === "stretch") return VideoOutput.Stretch
+                        return VideoOutput.PreserveAspectCrop
+                    }
+                    scale: Config.options.background.video.scale || 1.0
+                    transformOrigin: Item.Center
+
+                    transform: Translate {
+                        id: videoTranslate
+                        x: {
+                            const ax = Config.options.background.video.alignX || 0.0;
+                            const s = videoWallpaper.scale;
+                            const baseW = videoContainer.width;
+                            const baseH = videoContainer.height;
+                            const vidW = videoWallpaper.sourceRect.width || baseW;
+                            const vidH = videoWallpaper.sourceRect.height || baseH;
+                            const m = Config.options.background.video.fitMode || "crop";
+
+                            let effW = baseW * s;
+                            if (m === "crop" && vidH > 0) {
+                                const vidAspect = vidW / vidH;
+                                const scrAspect = baseW / baseH;
+                                if (vidAspect > scrAspect) {
+                                    effW = baseH * vidAspect * s;
+                                }
+                            }
+                            const maxPanX = Math.max(0, (effW - baseW) / 2);
+                            return -ax * maxPanX;
+                        }
+                        y: {
+                            const ay = Config.options.background.video.alignY || 0.0;
+                            const s = videoWallpaper.scale;
+                            const baseW = videoContainer.width;
+                            const baseH = videoContainer.height;
+                            const vidW = videoWallpaper.sourceRect.width || baseW;
+                            const vidH = videoWallpaper.sourceRect.height || baseH;
+                            const m = Config.options.background.video.fitMode || "crop";
+
+                            let effH = baseH * s;
+                            if (m === "crop" && vidW > 0) {
+                                const vidAspect = vidW / vidH;
+                                const scrAspect = baseW / baseH;
+                                if (vidAspect < scrAspect) {
+                                    effH = (baseW / vidAspect) * s;
+                                }
+                            }
+                            const maxPanY = Math.max(0, (effH - baseH) / 2);
+                            return -ay * maxPanY;
+                        }
+                    }
+                }
+            }
+
             Image {
                 id: previousWallpaper
                 anchors.fill: parent
@@ -215,8 +331,8 @@ Variants {
                 mipmap: true
                 smooth: true
                 layer.enabled: true
-                visible: !bgRoot.videoRevealed
-                opacity: bgRoot.videoRevealed ? 0 : 1
+                visible: !bgRoot.wallpaperIsVideo
+                opacity: 1
             }
 
             StyledImage {
@@ -227,8 +343,8 @@ Variants {
                 smooth: true
                 mipmap: true
                 asynchronous: true
-                layer.enabled: bgRoot.wallpaperIsVideo ? false : true
-                visible: !blurLoader.active && !bgRoot.videoRevealed
+                layer.enabled: true
+                visible: !bgRoot.wallpaperIsVideo && !blurLoader.active
                     && (bgRoot.wallpaperAnimation === "" || bgRoot.transitionProgress >= 1.0)
                     && !centeredWallpaper.centeredHidesFullWallpaper
                 opacity: centeredWallpaper.centeredFullWallpaperOpacity()
@@ -244,7 +360,7 @@ Variants {
             ShaderEffect {
                 id: transitionEffect
                 anchors.fill: parent
-                visible: !blurLoader.active && bgRoot.wallpaperAnimation !== "" && !centeredWallpaper.centeredShapeActive && !bgRoot.videoRevealed
+                visible: !bgRoot.wallpaperIsVideo && !blurLoader.active && bgRoot.wallpaperAnimation !== "" && !centeredWallpaper.centeredShapeActive
                     && bgRoot.transitionProgress < 1.0
 
                 property var fromImage: previousWallpaper
@@ -286,11 +402,11 @@ Variants {
                         id: scaleAnim
                         duration: 400
                         easing.type: Easing.BezierSpline
-                        easing.bezierCurve: Appearance.animationCurves.expressiveDefaultSpatial
+                        easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial
                     }
                 }
                 sourceComponent: GaussianBlur {
-                    source: bgRoot.wallpaperAnimation === "" || bgRoot.transitionProgress >= 1.0 ? wallpaper : transitionEffect
+                    source: bgRoot.wallpaperIsVideo ? videoWallpaper : (bgRoot.wallpaperAnimation === "" || bgRoot.transitionProgress >= 1.0 ? wallpaper : transitionEffect)
                     radius: GlobalStates.screenLocked ? Config.options.lock.blur.radius : 0
                     samples: Config.options.lock.blur.size 
                     Rectangle {
@@ -323,7 +439,7 @@ Variants {
                     FastBlur {
                         id: blurLayer
                         anchors.fill: parent
-                        source: bgRoot.wallpaperAnimation === "" || bgRoot.transitionProgress >= 1.0 ? wallpaper : transitionEffect
+                        source: bgRoot.wallpaperIsVideo ? videoWallpaper : (bgRoot.wallpaperAnimation === "" || bgRoot.transitionProgress >= 1.0 ? wallpaper : transitionEffect)
                         radius: blurRoot.blurRadius
 
                         layer.enabled: !bgRoot.blurFullScreen
@@ -389,7 +505,7 @@ Variants {
 
                 WidgetsLoader {
                     screen: bgRoot.screen
-                    wallpaperItem: wallpaper
+                    wallpaperItem: bgRoot.wallpaperIsVideo ? videoWallpaper : wallpaper
                     wallpaperSafetyTriggered: bgRoot.wallpaperSafetyTriggered
                 }
             }

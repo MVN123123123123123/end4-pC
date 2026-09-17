@@ -191,10 +191,12 @@ create_restore_script() {
 
 pkill -f -9 mpvpaper
 
-for monitor in \$(hyprctl monitors -j | jq -r '.[] | .name'); do
-    setsid mpvpaper -o "$video_opts" "\$monitor" "$video_path" >/dev/null 2>&1 &
-    sleep 0.1
-done
+if ! pidof qs &>/dev/null && ! pidof quickshell &>/dev/null; then
+    for monitor in \$(hyprctl monitors -j | jq -r '.[] | .name'); do
+        setsid mpvpaper -o "$video_opts" "\$monitor" "$video_path" >/dev/null 2>&1 &
+        sleep 0.1
+    done
+fi
 EOF
     mv "$RESTORE_SCRIPT.tmp" "$RESTORE_SCRIPT"
     chmod +x "$RESTORE_SCRIPT"
@@ -296,14 +298,16 @@ switch() {
             if [[ -z "$colors_only_flag" ]]; then
                 set_wallpaper_path "$imgpath"
 
-                local video_path="$imgpath"
-                local video_opts
-                video_opts="$(get_video_opts)"
-                monitors=$(hyprctl monitors -j | jq -r '.[] | .name')
-                for monitor in $monitors; do
-                    setsid mpvpaper -o "$video_opts" "$monitor" "$video_path" >/dev/null 2>&1 &
-                    sleep 0.1
-                done
+                if ! pidof qs &>/dev/null && ! pidof quickshell &>/dev/null; then
+                    local video_path="$imgpath"
+                    local video_opts
+                    video_opts="$(get_video_opts)"
+                    monitors=$(hyprctl monitors -j | jq -r '.[] | .name')
+                    for monitor in $monitors; do
+                        setsid mpvpaper -o "$video_opts" "$monitor" "$video_path" >/dev/null 2>&1 &
+                        sleep 0.1
+                    done
+                fi
             fi
 
             thumbnail="$THUMBNAIL_DIR/$(basename "$imgpath").jpg"
@@ -530,11 +534,13 @@ main() {
             local video_opts
             video_opts="$(get_video_opts)"
             create_restore_script "$imgpath"
-            monitors=$(hyprctl monitors -j | jq -r '.[] | .name')
-            for monitor in $monitors; do
-                setsid mpvpaper -o "$video_opts" "$monitor" "$imgpath" >/dev/null 2>&1 &
-                sleep 0.1
-            done
+            if ! pidof qs &>/dev/null && ! pidof quickshell &>/dev/null; then
+                monitors=$(hyprctl monitors -j | jq -r '.[] | .name')
+                for monitor in $monitors; do
+                    setsid mpvpaper -o "$video_opts" "$monitor" "$imgpath" >/dev/null 2>&1 &
+                    sleep 0.1
+                done
+            fi
         fi
         exit 0
     fi
