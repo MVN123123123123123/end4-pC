@@ -121,7 +121,7 @@ MouseArea {
 
             readonly property string effectiveWall: (GlobalStates.screenLocked && Config.options.background.lockWall !== "")
                 ? Config.options.background.lockWall
-                : Config.options.background.wallpaperPath
+                : (Wallpapers.previewPath || Wallpapers.confirmedPath || Config.options.background.wallpaperPath)
             readonly property bool isVideo: Images.isVideoByName(effectiveWall)
 
             MediaPlayer {
