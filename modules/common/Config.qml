@@ -225,6 +225,7 @@ Singleton {
                 property bool widgetsLocked: false
                 property bool showGrid: true
                 property bool showBlur: false
+                property real blurRadius: 32
                 property string splitRatio: "100" // 25 50 100
                 property string splitSide: "left"
                 property bool showSnapLines: true

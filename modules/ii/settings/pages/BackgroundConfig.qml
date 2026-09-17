@@ -237,6 +237,18 @@ ContentPage {
                     }
                 }
 
+                ConfigSlider {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Blur Size")
+                    value: Config.options.background.blurRadius ?? 32
+                    usePercentTooltip: false
+                    buttonIcon: "aspect_ratio"
+                    from: 1
+                    to: 64
+                    stopIndicatorValues: [32]
+                    onValueChanged: Config.options.background.blurRadius = value
+                }
+
                 ConfigSelectionArray {
                     text: Translation.tr("Split blur amount")
                     icon: "split_scene"
