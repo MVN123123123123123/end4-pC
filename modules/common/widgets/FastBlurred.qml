@@ -39,6 +39,13 @@ Item {
                 var _fx = root.trackX
                 var _fy = root.trackY
                 if (!root.blurSource) return Qt.rect(0, 0, 0, 0)
+                var _bs = root.blurSource.scale
+                var _bw = root.blurSource.width
+                var _bh = root.blurSource.height
+                var _bx = root.blurSource.x
+                var _by = root.blurSource.y
+                var _px = root.blurSource.panX ?? 0
+                var _py = root.blurSource.panY ?? 0
                 var p1 = root.mapToItem(root.blurSource, -root.oversample, -root.oversample)
                 var p2 = root.mapToItem(root.blurSource, root.width + root.oversample, root.height + root.oversample)
                 return Qt.rect(Math.min(p1.x, p2.x), Math.min(p1.y, p2.y), Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y))

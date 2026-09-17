@@ -57,7 +57,7 @@ Variants {
             return Wallpapers.previewPath || Wallpapers.confirmedPath || Config.options.background.wallpaperPath;
         }
 
-        property bool wallpaperIsVideo: bgRoot.effectiveWallpaperPath.endsWith(".mp4") || bgRoot.effectiveWallpaperPath.endsWith(".webm") || bgRoot.effectiveWallpaperPath.endsWith(".mkv") || bgRoot.effectiveWallpaperPath.endsWith(".avi") || bgRoot.effectiveWallpaperPath.endsWith(".mov")
+        property bool wallpaperIsVideo: Images.isVideoByName(bgRoot.effectiveWallpaperPath)
         property string wallpaperPath: wallpaperIsVideo ? Config.options.background.thumbnailPath : bgRoot.effectiveWallpaperPath
         property bool wallpaperSafetyTriggered: {
             const enabled = Config.options.workSafety.enable.wallpaper;
@@ -124,18 +124,12 @@ Variants {
                 bgRoot.transitionPending = false
                 previousWallpaper.source = ""
                 wallpaper.source = ""
-                videoPlayer.stop()
                 bgRoot.transitionProgress = 1.0
                 return
             }
             if (bgRoot.wallpaperIsVideo) {
                 bgRoot.transitionPending = false
-                videoPlayer.source = "file://" + CF.FileUtils.trimFileProtocol(bgRoot.effectiveWallpaperPath)
-                videoPlayer.play()
                 return
-            } else {
-                videoPlayer.stop()
-                videoPlayer.source = ""
             }
             if (bgRoot.wallpaperAnimation === "") {
                 bgRoot.transitionPending = false
@@ -201,8 +195,9 @@ Variants {
             target: Wallpapers
             function onVideoWallpaperReloadRequested() {
                 if (bgRoot.wallpaperIsVideo) {
-                    videoPlayer.stop();
-                    videoPlayer.play();
+                    if (videoPlayer.playbackState === MediaPlayer.StoppedState) {
+                        videoPlayer.play();
+                    }
                 }
             }
         }
@@ -230,14 +225,23 @@ Variants {
 
             MediaPlayer {
                 id: videoPlayer
-                source: bgRoot.wallpaperIsVideo ? ("file://" + CF.FileUtils.trimFileProtocol(bgRoot.effectiveWallpaperPath)) : ""
+                source: (bgRoot.wallpaperIsVideo && !bgRoot.wallpaperSafetyTriggered)
+                    ? ("file://" + CF.FileUtils.trimFileProtocol(bgRoot.effectiveWallpaperPath))
+                    : ""
                 videoOutput: videoWallpaper
                 loops: Config.options.background.video.loop !== false ? MediaPlayer.Infinite : 1
                 audioOutput: AudioOutput {
                     muted: (Config.options.background.video.mute !== false) || (bgRoot.screen !== Quickshell.screens[0])
                 }
+                onSourceChanged: {
+                    if (source.toString() !== "") {
+                        play();
+                    } else {
+                        stop();
+                    }
+                }
                 Component.onCompleted: {
-                    if (bgRoot.wallpaperIsVideo) play()
+                    if (source.toString() !== "") play();
                 }
                 onErrorOccurred: (error, errorString) => {
                     console.warn("[Background] Video player error:", error, errorString)
@@ -265,6 +269,8 @@ Variants {
 
                 VideoOutput {
                     id: videoWallpaper
+                    property real panX: videoTranslate.x
+                    property real panY: videoTranslate.y
                     anchors.centerIn: parent
                     width: parent.width
                     height: parent.height
