@@ -130,7 +130,7 @@ MouseArea {
                     ? ("file://" + FileUtils.trimFileProtocol(effectiveWall))
                     : ""
                 videoOutput: lockVideoOutput
-                loops: MediaPlayer.Infinite
+                loops: (Config.options.background.video?.loop !== false) ? MediaPlayer.Infinite : 1
                 audioOutput: AudioOutput { muted: true }
                 onSourceChanged: {
                     if (source.toString() !== "") {
@@ -142,13 +142,72 @@ MouseArea {
                 Component.onCompleted: {
                     if (source.toString() !== "") play();
                 }
+                onErrorOccurred: (error, errorString) => {
+                    console.warn("[LockSurface] Video player error:", error, errorString)
+                }
             }
 
-            VideoOutput {
-                id: lockVideoOutput
+            Item {
+                id: lockVideoContainer
                 anchors.fill: parent
-                fillMode: VideoOutput.PreserveAspectCrop
                 visible: isVideo
+                clip: true
+
+                readonly property real baseW: width
+                readonly property real baseH: height
+                readonly property real scale: Config.options.background.video?.scale || 1.0
+                readonly property real alignX: Config.options.background.video?.alignX || 0.0
+                readonly property real alignY: Config.options.background.video?.alignY || 0.0
+                readonly property string fitMode: Config.options.background.video?.fitMode || "crop"
+
+                readonly property real vidW: lockVideoOutput.implicitWidth > 0 ? lockVideoOutput.implicitWidth : (lockVideoOutput.sourceRect.width > 0 ? lockVideoOutput.sourceRect.width : baseW)
+                readonly property real vidH: lockVideoOutput.implicitHeight > 0 ? lockVideoOutput.implicitHeight : (lockVideoOutput.sourceRect.height > 0 ? lockVideoOutput.sourceRect.height : baseH)
+                readonly property real vidAspect: (vidH > 0 && vidW > 0) ? (vidW / vidH) : (baseW / baseH)
+                readonly property real scrAspect: (baseH > 0 && baseW > 0) ? (baseW / baseH) : 1.0
+
+                readonly property real effW: {
+                    if (fitMode === "stretch") return baseW * scale;
+                    if (fitMode === "fit") {
+                        return (vidAspect > scrAspect ? baseW : baseH * vidAspect) * scale;
+                    }
+                    return (vidAspect > scrAspect ? baseH * vidAspect : baseW) * scale;
+                }
+
+                readonly property real effH: {
+                    if (fitMode === "stretch") return baseW * scale;
+                    if (fitMode === "fit") {
+                        return (vidAspect > scrAspect ? baseW / vidAspect : baseH) * scale;
+                    }
+                    return (vidAspect > scrAspect ? baseH : baseW / vidAspect) * scale;
+                }
+
+                readonly property real maxPanX: Math.max(0, (effW - baseW) / 2)
+                readonly property real maxPanY: Math.max(0, (effH - baseH) / 2)
+
+                readonly property real panX: -alignX * maxPanX
+                readonly property real panY: -alignY * maxPanY
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "black"
+                    z: -1
+                }
+
+                VideoOutput {
+                    id: lockVideoOutput
+                    property real panX: lockVideoContainer.panX
+                    property real panY: lockVideoContainer.panY
+                    anchors.centerIn: parent
+                    width: lockVideoContainer.effW
+                    height: lockVideoContainer.effH
+                    fillMode: lockVideoContainer.fitMode === "stretch" ? VideoOutput.Stretch : VideoOutput.PreserveAspectCrop
+                    transformOrigin: Item.Center
+
+                    transform: Translate {
+                        x: lockVideoContainer.panX
+                        y: lockVideoContainer.panY
+                    }
+                }
             }
 
             Image {
@@ -165,7 +224,7 @@ MouseArea {
 
             FastBlur {
                 anchors.fill: parent
-                source: isVideo ? lockVideoOutput : lockBgSource
+                source: isVideo ? lockVideoContainer : lockBgSource
                 radius: Config.options.lock.blur.enable ? Config.options.lock.blur.radius : 0
                 visible: Config.options.lock.blur.enable
             }

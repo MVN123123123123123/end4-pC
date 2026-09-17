@@ -397,7 +397,7 @@ Variants {
                     }
                 }
                 sourceComponent: GaussianBlur {
-                    source: bgRoot.wallpaperIsVideo ? videoWallpaper : (bgRoot.wallpaperAnimation === "" || bgRoot.transitionProgress >= 1.0 ? wallpaper : transitionEffect)
+                    source: bgRoot.wallpaperIsVideo ? videoContainer : (bgRoot.wallpaperAnimation === "" || bgRoot.transitionProgress >= 1.0 ? wallpaper : transitionEffect)
                     radius: GlobalStates.screenLocked ? Config.options.lock.blur.radius : 0
                     samples: Config.options.lock.blur.size 
                     Rectangle {
@@ -430,7 +430,7 @@ Variants {
                     FastBlur {
                         id: blurLayer
                         anchors.fill: parent
-                        source: bgRoot.wallpaperIsVideo ? videoWallpaper : (bgRoot.wallpaperAnimation === "" || bgRoot.transitionProgress >= 1.0 ? wallpaper : transitionEffect)
+                        source: bgRoot.wallpaperIsVideo ? videoContainer : (bgRoot.wallpaperAnimation === "" || bgRoot.transitionProgress >= 1.0 ? wallpaper : transitionEffect)
                         radius: blurRoot.blurRadius
 
                         layer.enabled: !bgRoot.blurFullScreen
@@ -496,7 +496,7 @@ Variants {
 
                 WidgetsLoader {
                     screen: bgRoot.screen
-                    wallpaperItem: bgRoot.wallpaperIsVideo ? videoWallpaper : wallpaper
+                    wallpaperItem: bgRoot.wallpaperIsVideo ? videoContainer : wallpaper
                     wallpaperSafetyTriggered: bgRoot.wallpaperSafetyTriggered
                 }
             }
