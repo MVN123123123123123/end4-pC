@@ -401,7 +401,7 @@ Variants {
                         id: scaleAnim
                         duration: 400
                         easing.type: Easing.BezierSpline
-                        easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial
+                        easing.bezierCurve: Appearance.animationCurves.expressiveDefaultSpatial
                     }
                 }
                 sourceComponent: GaussianBlur {

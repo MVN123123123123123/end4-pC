@@ -222,11 +222,18 @@ MouseArea {
                 visible: !isVideo
             }
 
-            FastBlur {
+            GaussianBlur {
                 anchors.fill: parent
                 source: isVideo ? lockVideoContainer : lockBgSource
                 radius: Config.options.lock.blur.enable ? Config.options.lock.blur.radius : 0
+                samples: Config.options.lock.blur.size
                 visible: Config.options.lock.blur.enable
+
+                Rectangle {
+                    opacity: Config.options.lock.blur.enable ? 1 : 0
+                    anchors.fill: parent
+                    color: ColorUtils.transparentize(Appearance.colors.colLayer0, 0.7)
+                }
             }
         }
     }

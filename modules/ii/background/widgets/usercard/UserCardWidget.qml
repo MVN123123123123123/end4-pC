@@ -639,7 +639,7 @@ AbstractBackgroundWidget {
 
                         Image {
                             anchors.fill: parent
-                            source: Config.options.sidebar.bannerImage || Config.options.background.wallpaperPath
+                            source: Config.options.sidebar.bannerImage || (Images.isVideoByName(Config.options.background.wallpaperPath) ? Config.options.background.thumbnailPath : Config.options.background.wallpaperPath)
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                             cache: false
