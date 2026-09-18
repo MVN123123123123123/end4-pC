@@ -216,6 +216,29 @@ Variants {
                 NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
             }
 
+            AudioOutput {
+                id: bgAudioOutput
+                muted: false
+            }
+
+            Timer {
+                id: recoveryTimer
+                interval: 250
+                repeat: false
+                onTriggered: {
+                    if (bgRoot.wallpaperIsVideo && !bgRoot.hiddenForFullscreen && videoPlayer.source.toString() !== "") {
+                        if (videoPlayer.playbackState !== MediaPlayer.PlayingState) {
+                            if (videoPlayer.error !== MediaPlayer.NoError) {
+                                const s = videoPlayer.source;
+                                videoPlayer.source = "";
+                                videoPlayer.source = s;
+                            }
+                            videoPlayer.play();
+                        }
+                    }
+                }
+            }
+
             MediaPlayer {
                 id: videoPlayer
                 source: (bgRoot.wallpaperIsVideo && !bgRoot.wallpaperSafetyTriggered)
@@ -223,8 +246,20 @@ Variants {
                     : ""
                 videoOutput: videoWallpaper
                 loops: (Config.options.background.video?.loop !== false) ? MediaPlayer.Infinite : 1
-                audioOutput: AudioOutput {
-                    muted: (Config.options.background.video?.mute !== false) || (bgRoot.screen !== Quickshell.screens[0])
+                audioOutput: (Config.options.background.video?.mute === false && bgRoot.screen === Quickshell.screens[0]) ? bgAudioOutput : null
+                onPlaybackStateChanged: {
+                    if (bgRoot.wallpaperIsVideo && !bgRoot.hiddenForFullscreen && source.toString() !== "") {
+                        if (playbackState !== MediaPlayer.PlayingState) {
+                            recoveryTimer.restart();
+                        }
+                    }
+                }
+                onMediaStatusChanged: {
+                    if (mediaStatus === MediaPlayer.EndOfMedia) {
+                        if (Config.options.background.video?.loop !== false) {
+                            play();
+                        }
+                    }
                 }
                 onSourceChanged: {
                     if (source.toString() !== "") {
@@ -237,7 +272,10 @@ Variants {
                     if (source.toString() !== "") play();
                 }
                 onErrorOccurred: (error, errorString) => {
-                    console.warn("[Background] Video player error:", error, errorString)
+                    console.warn("[Background] Video player error:", error, errorString);
+                    if (bgRoot.wallpaperIsVideo && !bgRoot.hiddenForFullscreen && source.toString() !== "") {
+                        recoveryTimer.restart();
+                    }
                 }
             }
 

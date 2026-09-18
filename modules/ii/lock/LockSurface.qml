@@ -124,6 +124,24 @@ MouseArea {
                 : (Wallpapers.previewPath || Wallpapers.confirmedPath || Config.options.background.wallpaperPath)
             readonly property bool isVideo: Images.isVideoByName(effectiveWall)
 
+            Timer {
+                id: lockRecoveryTimer
+                interval: 250
+                repeat: false
+                onTriggered: {
+                    if (isVideo && lockVideoPlayer.source.toString() !== "") {
+                        if (lockVideoPlayer.playbackState !== MediaPlayer.PlayingState) {
+                            if (lockVideoPlayer.error !== MediaPlayer.NoError) {
+                                const s = lockVideoPlayer.source;
+                                lockVideoPlayer.source = "";
+                                lockVideoPlayer.source = s;
+                            }
+                            lockVideoPlayer.play();
+                        }
+                    }
+                }
+            }
+
             MediaPlayer {
                 id: lockVideoPlayer
                 source: isVideo
@@ -131,7 +149,19 @@ MouseArea {
                     : ""
                 videoOutput: lockVideoOutput
                 loops: (Config.options.background.video?.loop !== false) ? MediaPlayer.Infinite : 1
-                audioOutput: AudioOutput { muted: true }
+                audioOutput: null
+                onPlaybackStateChanged: {
+                    if (isVideo && source.toString() !== "" && playbackState !== MediaPlayer.PlayingState) {
+                        lockRecoveryTimer.restart();
+                    }
+                }
+                onMediaStatusChanged: {
+                    if (mediaStatus === MediaPlayer.EndOfMedia) {
+                        if (Config.options.background.video?.loop !== false) {
+                            play();
+                        }
+                    }
+                }
                 onSourceChanged: {
                     if (source.toString() !== "") {
                         play();
@@ -143,7 +173,10 @@ MouseArea {
                     if (source.toString() !== "") play();
                 }
                 onErrorOccurred: (error, errorString) => {
-                    console.warn("[LockSurface] Video player error:", error, errorString)
+                    console.warn("[LockSurface] Video player error:", error, errorString);
+                    if (isVideo && source.toString() !== "") {
+                        lockRecoveryTimer.restart();
+                    }
                 }
             }
 
