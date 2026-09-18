@@ -174,7 +174,7 @@ MouseArea {
                 }
 
                 readonly property real effH: {
-                    if (fitMode === "stretch") return baseW * scale;
+                    if (fitMode === "stretch") return baseH * scale;
                     if (fitMode === "fit") {
                         return (vidAspect > scrAspect ? baseW / vidAspect : baseH) * scale;
                     }
