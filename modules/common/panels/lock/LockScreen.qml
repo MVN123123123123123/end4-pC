@@ -130,13 +130,19 @@ Scope {
         }
     }
 
+    property bool initialized: false
+
     function initIfReady() {
-        if (!Config.ready || !Persistent.ready) return;
+        if (root.initialized || !Config.ready || !Persistent.ready) return;
+        root.initialized = true;
         if (Config.options.lock.launchOnStartup && Persistent.isNewHyprlandInstance) {
             root.lock();
         } else {
             KeyringStorage.fetchKeyringData();
         }
+    }
+    Component.onCompleted: {
+        root.initIfReady();
     }
     Connections {
         target: Config

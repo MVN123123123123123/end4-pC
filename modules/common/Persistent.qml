@@ -16,8 +16,13 @@ Singleton {
     property bool isNewHyprlandInstance: previousHyprlandInstanceSignature !== states.hyprlandInstanceSignature
 
     onReadyChanged: {
+        if (!root.ready) return;
         root.previousHyprlandInstanceSignature = root.states.hyprlandInstanceSignature
-        root.states.hyprlandInstanceSignature = Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") || ""
+        root.states.hyprlandInstanceSignature = Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
+            || Quickshell.env("NIRI_SOCKET")
+            || Quickshell.env("SWAYSOCK")
+            || Quickshell.env("WAYLAND_DISPLAY")
+            || ""
     }
 
     Timer {
