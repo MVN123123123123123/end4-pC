@@ -16,7 +16,7 @@ Singleton {
 
     function startInhibitProcess() {
         if (root.inhibit && root.inhibitBinary.length > 0 && !inhibitProc.running) {
-            inhibitProc.command = [root.inhibitBinary, "--what=idle:sleep:handle-lid-switch", "--who=quickshell", "--why=Keep awake", "sleep", "infinity"];
+            inhibitProc.command = [root.inhibitBinary, "--what=idle:sleep", "--who=quickshell", "--why=Keep awake", "sleep", "infinity"];
             inhibitProc.running = true;
         }
     }

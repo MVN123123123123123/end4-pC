@@ -208,6 +208,7 @@ Variants {
         }
 
         Item {
+            id: bgItem
             anchors.fill: parent
             opacity: bgRoot.hiddenForFullscreen ? 0 : 1
             enabled: !bgRoot.hiddenForFullscreen
@@ -218,7 +219,16 @@ Variants {
 
             AudioOutput {
                 id: bgAudioOutput
-                muted: false
+                muted: GlobalStates.screenLocked
+            }
+
+            property int videoRetryCount: 0
+
+            Connections {
+                target: bgRoot
+                function onEffectiveWallpaperPathChanged() {
+                    bgItem.videoRetryCount = 0;
+                }
             }
 
             Timer {
@@ -226,14 +236,26 @@ Variants {
                 interval: 250
                 repeat: false
                 onTriggered: {
+                    if (WM.compositor === "niri" && GlobalStates.screenLocked) return;
                     if (bgRoot.wallpaperIsVideo && !bgRoot.hiddenForFullscreen && videoPlayer.source.toString() !== "") {
+                        if (Config.options.background.video?.loop === false && (videoPlayer.playbackState === MediaPlayer.StoppedState || videoPlayer.mediaStatus === MediaPlayer.EndOfMedia)) {
+                            return;
+                        }
                         if (videoPlayer.playbackState !== MediaPlayer.PlayingState) {
                             if (videoPlayer.error !== MediaPlayer.NoError) {
+                                if (bgItem.videoRetryCount >= 2) {
+                                    console.warn("[Background] Video playback failed permanently after retries, stopping recovery.");
+                                    videoPlayer.stop();
+                                    return;
+                                }
+                                bgItem.videoRetryCount++;
                                 const s = videoPlayer.source;
                                 videoPlayer.source = "";
                                 videoPlayer.source = s;
                             }
-                            videoPlayer.play();
+                            if (!(WM.compositor === "niri" && GlobalStates.screenLocked) && !bgRoot.hiddenForFullscreen) {
+                                videoPlayer.play();
+                            }
                         }
                     }
                 }
@@ -246,10 +268,17 @@ Variants {
                     : ""
                 videoOutput: videoWallpaper
                 loops: (Config.options.background.video?.loop !== false) ? MediaPlayer.Infinite : 1
-                audioOutput: (Config.options.background.video?.mute === false && bgRoot.screen === Quickshell.screens[0]) ? bgAudioOutput : null
+                audioOutput: (Config.options.background.video?.mute === false && bgRoot.screen === Quickshell.screens[0] && !GlobalStates.screenLocked) ? bgAudioOutput : null
                 onPlaybackStateChanged: {
+                    if (playbackState === MediaPlayer.PlayingState && error === MediaPlayer.NoError) {
+                        bgItem.videoRetryCount = 0;
+                    }
+                    if (WM.compositor === "niri" && GlobalStates.screenLocked) return;
                     if (bgRoot.wallpaperIsVideo && !bgRoot.hiddenForFullscreen && source.toString() !== "") {
                         if (playbackState !== MediaPlayer.PlayingState) {
+                            if (Config.options.background.video?.loop === false && (playbackState === MediaPlayer.StoppedState || mediaStatus === MediaPlayer.EndOfMedia)) {
+                                return;
+                            }
                             recoveryTimer.restart();
                         }
                     }
@@ -263,18 +292,25 @@ Variants {
                 }
                 onSourceChanged: {
                     if (source.toString() !== "") {
-                        play();
+                        if (!(WM.compositor === "niri" && GlobalStates.screenLocked) && !bgRoot.hiddenForFullscreen) {
+                            play();
+                        }
                     } else {
                         stop();
                     }
                 }
                 Component.onCompleted: {
-                    if (source.toString() !== "") play();
+                    if (source.toString() !== "" && !(WM.compositor === "niri" && GlobalStates.screenLocked) && !bgRoot.hiddenForFullscreen) play();
                 }
                 onErrorOccurred: (error, errorString) => {
                     console.warn("[Background] Video player error:", error, errorString);
                     if (bgRoot.wallpaperIsVideo && !bgRoot.hiddenForFullscreen && source.toString() !== "") {
-                        recoveryTimer.restart();
+                        if (bgItem.videoRetryCount < 2) {
+                            recoveryTimer.restart();
+                        } else {
+                            console.warn("[Background] Video playback failed permanently after retries, stopping recovery.");
+                            stop();
+                        }
                     }
                 }
             }
@@ -285,7 +321,19 @@ Variants {
                     if (!bgRoot.wallpaperIsVideo) return;
                     if (bgRoot.hiddenForFullscreen) {
                         videoPlayer.pause();
-                    } else {
+                    } else if (!(WM.compositor === "niri" && GlobalStates.screenLocked)) {
+                        videoPlayer.play();
+                    }
+                }
+            }
+
+            Connections {
+                target: GlobalStates
+                function onScreenLockedChanged() {
+                    if (!bgRoot.wallpaperIsVideo) return;
+                    if (WM.compositor === "niri" && GlobalStates.screenLocked) {
+                        videoPlayer.pause();
+                    } else if (!bgRoot.hiddenForFullscreen) {
                         videoPlayer.play();
                     }
                 }
@@ -432,6 +480,7 @@ Variants {
                 active: Config.options.lock.blur.enable && !centeredWallpaper.centeredWallpaperEnabled
                     && (GlobalStates.screenLocked || scaleAnim.running)
                     && !(bgRoot.userBlurActive || bgRoot.overviewBlurActive)
+                    && WM.compositor !== "niri"
                 anchors.fill: parent
                 scale: GlobalStates.screenLocked ? Config.options.lock.blur.extraZoom : 1
                 Behavior on scale {

@@ -11,6 +11,18 @@ Item {
     property real blurRadius: Config.options.background.widgets.blurRadius ?? 32
     property real trackX: 0
     property real trackY: 0
+    property bool live: false
+
+    function scheduleUpdate() {
+        shaderSource.scheduleUpdate();
+    }
+
+    onBlurSourceChanged: scheduleUpdate()
+    Component.onCompleted: scheduleUpdate()
+    onXChanged: scheduleUpdate()
+    onYChanged: scheduleUpdate()
+    onWidthChanged: scheduleUpdate()
+    onHeightChanged: scheduleUpdate()
 
     readonly property real oversample: blurRadius * 1.5
 
@@ -59,7 +71,7 @@ Item {
                 return Qt.rect(Math.min(p1.x, p2.x), Math.min(p1.y, p2.y), Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y))
             }
             hideSource: false
-            live: true
+            live: root.live
         }
     }
 

@@ -46,7 +46,7 @@ StyledImage {
             const isVid = Images.isVideoByName(root.sourcePath);
             if (isVid) {
                 return ["bash", "-c",
-                    `[ -f '${outPath}' ] && exit 0 || { mkdir -p "$(dirname '${outPath}')" && (ffmpegthumbnailer -i '${root.sourcePath}' -o '${outPath}' -s ${maxSize} 2>/dev/null || ffmpeg -y -i '${root.sourcePath}' -vframes 1 -vf "scale=${maxSize}:-1" '${outPath}' 2>/dev/null) && exit 1; }`
+                    `[ -f '${outPath}' ] && exit 0 || { mkdir -p "$(dirname '${outPath}')" && (ffmpegthumbnailer -i '${root.sourcePath}' -o '${outPath}' -s ${maxSize} 2>/dev/null || ffmpeg -y -i '${root.sourcePath}' -vframes 1 -vf "scale=${maxSize}:${maxSize}:force_original_aspect_ratio=decrease" '${outPath}' 2>/dev/null) && exit 1; }`
                 ];
             }
             return ["bash", "-c", 

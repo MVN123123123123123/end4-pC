@@ -12,17 +12,44 @@ Singleton {
     property string filePath: `${root.fileDir}/${root.fileName}`
 
     property bool ready: false
+    property bool persistentLoaded: false
+    property string bootId: ""
+    property bool bootIdLoaded: false
     property string previousHyprlandInstanceSignature: ""
     property bool isNewHyprlandInstance: previousHyprlandInstanceSignature !== states.hyprlandInstanceSignature
 
-    onReadyChanged: {
-        if (!root.ready) return;
+    function checkReady() {
+        if (root.ready || !root.persistentLoaded || !root.bootIdLoaded) return;
         root.previousHyprlandInstanceSignature = root.states.hyprlandInstanceSignature
-        root.states.hyprlandInstanceSignature = Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
+        const baseSignature = Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
             || Quickshell.env("NIRI_SOCKET")
             || Quickshell.env("SWAYSOCK")
             || Quickshell.env("WAYLAND_DISPLAY")
             || ""
+        if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")) {
+            root.states.hyprlandInstanceSignature = Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
+        } else {
+            root.states.hyprlandInstanceSignature = root.bootId ? `${baseSignature}_${root.bootId}` : baseSignature
+        }
+        if (root.previousHyprlandInstanceSignature !== root.states.hyprlandInstanceSignature) {
+            fileWriteTimer.restart()
+        }
+        root.ready = true;
+    }
+
+    FileView {
+        id: bootIdFile
+        path: "/proc/sys/kernel/random/boot_id"
+        onLoaded: {
+            root.bootId = bootIdFile.text().trim()
+            root.bootIdLoaded = true
+            root.checkReady()
+        }
+        onLoadFailed: error => {
+            root.bootId = ""
+            root.bootIdLoaded = true
+            root.checkReady()
+        }
     }
 
     Timer {
@@ -50,11 +77,16 @@ Singleton {
         watchChanges: true
         onFileChanged: fileReloadTimer.restart()
         onAdapterUpdated: fileWriteTimer.restart()
-        onLoaded: root.ready = true
+        onLoaded: {
+            root.persistentLoaded = true
+            root.checkReady()
+        }
         onLoadFailed: error => {
             console.log("Failed to load persistent states file:", error);
             if (error == FileViewError.FileNotFound) {
                 fileWriteTimer.restart();
+                root.persistentLoaded = true;
+                root.checkReady();
             }
         }
 

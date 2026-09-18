@@ -84,6 +84,7 @@ Scope {
                 MouseArea {
                     id: hoverRegion
                     hoverEnabled: true
+                    readonly property bool barHidden: Config?.options.bar.autoHide.enable && !barRoot.mustShow
                     anchors {
                         fill: parent
                         rightMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right ? 1 : 0)
@@ -94,10 +95,10 @@ Scope {
                         anchors {
                             top: parent.top
                             bottom: parent.bottom
-                            left: !Config.options.bar.bottom ? parent.left : barContent.left
-                            right: Config.options.bar.bottom ? parent.right : barContent.right
-                            leftMargin: Config.options.bar.bottom ? -Config.options.bar.autoHide.hoverRegionWidth : 0
-                            rightMargin: !Config.options.bar.bottom ? -Config.options.bar.autoHide.hoverRegionWidth : 0
+                            left: (!Config.options.bar.bottom && hoverRegion.barHidden) ? parent.left : barContent.left
+                            right: (Config.options.bar.bottom && hoverRegion.barHidden) ? parent.right : barContent.right
+                            leftMargin: (Config.options.bar.bottom && hoverRegion.barHidden) ? -Config.options.bar.autoHide.hoverRegionWidth : 0
+                            rightMargin: (!Config.options.bar.bottom && hoverRegion.barHidden) ? -Config.options.bar.autoHide.hoverRegionWidth : 0
                         }
                     }
 

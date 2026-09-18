@@ -124,14 +124,29 @@ MouseArea {
                 : (Wallpapers.previewPath || Wallpapers.confirmedPath || Config.options.background.wallpaperPath)
             readonly property bool isVideo: Images.isVideoByName(effectiveWall)
 
+            property int lockVideoRetryCount: 0
+
+            onEffectiveWallChanged: {
+                lockVideoRetryCount = 0;
+            }
+
             Timer {
                 id: lockRecoveryTimer
                 interval: 250
                 repeat: false
                 onTriggered: {
                     if (isVideo && lockVideoPlayer.source.toString() !== "") {
+                        if (Config.options.background.video?.loop === false && (lockVideoPlayer.playbackState === MediaPlayer.StoppedState || lockVideoPlayer.mediaStatus === MediaPlayer.EndOfMedia)) {
+                            return;
+                        }
                         if (lockVideoPlayer.playbackState !== MediaPlayer.PlayingState) {
                             if (lockVideoPlayer.error !== MediaPlayer.NoError) {
+                                if (lockVideoRetryCount >= 2) {
+                                    console.warn("[LockSurface] Video playback failed permanently after retries, stopping recovery.");
+                                    lockVideoPlayer.stop();
+                                    return;
+                                }
+                                lockVideoRetryCount++;
                                 const s = lockVideoPlayer.source;
                                 lockVideoPlayer.source = "";
                                 lockVideoPlayer.source = s;
@@ -151,7 +166,13 @@ MouseArea {
                 loops: (Config.options.background.video?.loop !== false) ? MediaPlayer.Infinite : 1
                 audioOutput: null
                 onPlaybackStateChanged: {
+                    if (playbackState === MediaPlayer.PlayingState && error === MediaPlayer.NoError) {
+                        lockVideoRetryCount = 0;
+                    }
                     if (isVideo && source.toString() !== "" && playbackState !== MediaPlayer.PlayingState) {
+                        if (Config.options.background.video?.loop === false && (playbackState === MediaPlayer.StoppedState || mediaStatus === MediaPlayer.EndOfMedia)) {
+                            return;
+                        }
                         lockRecoveryTimer.restart();
                     }
                 }
@@ -175,7 +196,12 @@ MouseArea {
                 onErrorOccurred: (error, errorString) => {
                     console.warn("[LockSurface] Video player error:", error, errorString);
                     if (isVideo && source.toString() !== "") {
-                        lockRecoveryTimer.restart();
+                        if (lockVideoRetryCount < 2) {
+                            lockRecoveryTimer.restart();
+                        } else {
+                            console.warn("[LockSurface] Video playback failed permanently after retries, stopping recovery.");
+                            stop();
+                        }
                     }
                 }
             }

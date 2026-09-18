@@ -67,7 +67,7 @@ generate_thumbnail() {
             if command -v ffmpegthumbnailer &>/dev/null; then
                 ffmpegthumbnailer -i "$abs_path" -o "$out" -s "$THUMBNAIL_SIZE" 2>/dev/null || true
             elif command -v ffmpeg &>/dev/null; then
-                ffmpeg -y -i "$abs_path" -vframes 1 -vf "scale=${THUMBNAIL_SIZE}:-1" "$out" 2>/dev/null || true
+                ffmpeg -y -i "$abs_path" -vframes 1 -vf "scale=${THUMBNAIL_SIZE}:${THUMBNAIL_SIZE}:force_original_aspect_ratio=decrease" "$out" 2>/dev/null || true
             fi
             return
             ;;
