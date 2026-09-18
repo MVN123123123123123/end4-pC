@@ -813,7 +813,7 @@ Singleton {
             }
 
             property JsonObject custom: JsonObject {
-                property string distroIcon: "spark"
+                property string distroIcon: "google-gemini-symbolic"
                 property bool colorizeIcon: true
             }
 
