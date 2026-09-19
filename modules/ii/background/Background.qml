@@ -353,6 +353,10 @@ Variants {
                 opacity: centeredWallpaper.centeredFullWallpaperOpacity()
                 clip: true
 
+                readonly property bool isVideo: true
+                readonly property int playbackState: videoPlayer.playbackState
+                readonly property int mediaStatus: videoPlayer.mediaStatus
+
                 readonly property real baseW: width
                 readonly property real baseH: height
                 readonly property real scale: Config.options.background.video?.scale || 1.0
@@ -428,6 +432,7 @@ Variants {
                 id: wallpaper
                 property real panX: 0
                 property real panY: 0
+                readonly property bool isVideo: false
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectCrop
                 sourceSize: bgRoot.wallpaperSourceSize

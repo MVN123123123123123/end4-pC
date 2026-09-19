@@ -4,14 +4,14 @@ import qs.modules.common
 
 Item {
     id: root
-    required property Item blurSource
+    required property var blurSource
     property real cardRadius: 30
     property color tint: "white"
     property real tintOpacity: 0.15
     property real blurRadius: Config.options.background.widgets.blurRadius ?? 32
     property real trackX: 0
     property real trackY: 0
-    property bool live: false
+    property bool live: Boolean(root.blurSource && root.blurSource.isVideo)
 
     function scheduleUpdate() {
         shaderSource.scheduleUpdate();
@@ -42,6 +42,13 @@ Item {
                 root.scheduleUpdate();
             }
         }
+        function onPanXChanged() { root.scheduleUpdate(); }
+        function onPanYChanged() { root.scheduleUpdate(); }
+        function onScaleChanged() { root.scheduleUpdate(); }
+        function onEffWChanged() { root.scheduleUpdate(); }
+        function onEffHChanged() { root.scheduleUpdate(); }
+        function onPlaybackStateChanged() { root.scheduleUpdate(); }
+        function onMediaStatusChanged() { root.scheduleUpdate(); }
     }
 
     FastBlur {
@@ -78,6 +85,7 @@ Item {
                 var _py = root.blurSource.panY ?? 0
                 var p1 = root.mapToItem(root.blurSource, -root.oversample, -root.oversample)
                 var p2 = root.mapToItem(root.blurSource, root.width + root.oversample, root.height + root.oversample)
+                if (!p1 || !p2 || isNaN(p1.x) || isNaN(p1.y) || isNaN(p2.x) || isNaN(p2.y)) return Qt.rect(0, 0, 0, 0)
                 return Qt.rect(Math.min(p1.x, p2.x), Math.min(p1.y, p2.y), Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y))
             }
             onSourceRectChanged: root.scheduleUpdate()
