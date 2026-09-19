@@ -34,29 +34,41 @@ StyledImage {
     }
 
     onSourceSizeChanged: {
-        if (!root.generateThumbnail) return;
+        if (!root.generateThumbnail || !root.sourcePath) return;
         thumbnailGeneration.running = false;
         thumbnailGeneration.running = true;
     }
     Process {
         id: thumbnailGeneration
         command: {
+            if (!root.sourcePath || !root.thumbnailPath) return ["true"];
             const maxSize = Images.thumbnailSizes[root.thumbnailSizeName];
             const outPath = FileUtils.trimFileProtocol(root.thumbnailPath);
+            const srcPath = FileUtils.trimFileProtocol(root.sourcePath);
             const isVid = Images.isVideoByName(root.sourcePath);
             if (isVid) {
-                return ["bash", "-c",
-                    `[ -f '${outPath}' ] && exit 0 || { mkdir -p "$(dirname '${outPath}')" && (ffmpegthumbnailer -i '${root.sourcePath}' -o '${outPath}' -s ${maxSize} 2>/dev/null || ffmpeg -y -i '${root.sourcePath}' -vframes 1 -vf "scale=${maxSize}:${maxSize}:force_original_aspect_ratio=decrease" '${outPath}' 2>/dev/null) && exit 1; }`
+                return [
+                    "bash", "-c",
+                    'out="$1"; src="$2"; sz="$3"; [ -s "$out" ] && exit 0 || { mkdir -p "$(dirname "$out")" && (ffmpegthumbnailer -i "$src" -o "$out" -s "$sz" 2>/dev/null || { ffmpeg -y -ss 00:00:01 -i "$src" -vframes 1 -vf "scale=${sz}:${sz}:force_original_aspect_ratio=decrease" "$out" 2>/dev/null; if [ ! -s "$out" ]; then ffmpeg -y -i "$src" -vframes 1 -vf "scale=${sz}:${sz}:force_original_aspect_ratio=decrease" "$out" 2>/dev/null; fi; }); if [ -s "$out" ]; then exit 1; else rm -f "$out"; exit 2; fi; }',
+                    "_",
+                    outPath,
+                    srcPath,
+                    String(maxSize)
                 ];
             }
-            return ["bash", "-c", 
-                `[ -f '${outPath}' ] && exit 0 || { mkdir -p "$(dirname '${outPath}')" && magick '${root.sourcePath}' -resize ${maxSize}x${maxSize} '${outPath}' && exit 1; }`
+            return [
+                "bash", "-c", 
+                'out="$1"; src="$2"; sz="$3"; [ -s "$out" ] && exit 0 || { mkdir -p "$(dirname "$out")" && magick "$src" -resize "${sz}x${sz}" "$out" 2>/dev/null; if [ -s "$out" ]; then exit 1; else rm -f "$out"; exit 2; fi; }',
+                "_",
+                outPath,
+                srcPath,
+                String(maxSize)
             ];
         }
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 1) { // Force reload if thumbnail had to be generated
                 root.source = "";
-                root.source = root.thumbnailPath; // Force reload
+                root.source = Qt.binding(() => root.thumbnailPath);
             }
         }
     }

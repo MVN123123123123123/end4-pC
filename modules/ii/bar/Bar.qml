@@ -79,6 +79,7 @@ Scope {
                     : Appearance.sizes.baseBarHeight
                         + (Config.options.bar.cornerStyle === 1 ? Appearance.sizes.hyprlandGapsOut : 0)
                         + (Config.options.bar.cornerStyle === 2 ? -6 : 0)
+                        + (Config.options.bar.cornerStyle === 3 ? 5 : 0)
 
                 exclusiveZone: (barContent.centerOnly && Config.options.bar.centerOnlyReserveFrame)
                     ? Config.options.bar.frameThickness
@@ -140,7 +141,6 @@ Scope {
                 MouseArea  {
                     id: hoverRegion
                     hoverEnabled: true
-                    readonly property bool barHidden: Config?.options.bar.autoHide.enable && !barRoot.mustShow
                     anchors {
                         fill: parent
                         rightMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right ? 1 : 0)
@@ -149,14 +149,14 @@ Scope {
 
                     Item {
                         id: hoverMaskRegion
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            top: (!Config.options.bar.bottom && hoverRegion.barHidden) ? parent.top : barContent.top
-                            bottom: (Config.options.bar.bottom && hoverRegion.barHidden) ? parent.bottom : barContent.bottom
-                            topMargin: (Config.options.bar.bottom && hoverRegion.barHidden) ? -Config.options.bar.autoHide.hoverRegionWidth : 0
-                            bottomMargin: (!Config.options.bar.bottom && hoverRegion.barHidden) ? -Config.options.bar.autoHide.hoverRegionWidth : 0
-                        }
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        y: !Config.options.bar.bottom
+                            ? 0
+                            : Math.min(barContent.y, parent.height - (Config.options.bar.autoHide.enable ? Config.options.bar.autoHide.hoverRegionWidth : 0))
+                        height: !Config.options.bar.bottom
+                            ? Math.max(barContent.y + barContent.height, Config.options.bar.autoHide.enable ? Config.options.bar.autoHide.hoverRegionWidth : 0)
+                            : (parent.height - y)
                     }
 
                     BarContent {

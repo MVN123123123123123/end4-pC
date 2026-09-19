@@ -307,11 +307,17 @@ AbstractBackgroundWidget {
                     visible: false
 
                     // Only feeds the FastBlur used when widget blur is off
-                    property string effectiveSource: Config.options.background.widgets.blurWidgets ? "" : "file://" + (GlobalStates.screenLocked && Config.options.background.lockWall !== ""
+                    property string effectiveWallPath: (GlobalStates.screenLocked && Config.options.background.lockWall !== "")
                         ? Config.options.background.lockWall
-                        : (Images.isVideoByName(Config.options.background.wallpaperPath)
+                        : Config.options.background.wallpaperPath
+                    property string effectiveSource: {
+                        if (Config.options.background.widgets.blurWidgets) return "";
+                        const path = Images.isVideoByName(effectiveWallPath)
                             ? Config.options.background.thumbnailPath
-                            : Config.options.background.wallpaperPath))
+                            : effectiveWallPath;
+                        if (!path) return "";
+                        return "file://" + FileUtils.trimFileProtocol(path);
+                    }
 
                     Image {
                         id: bgImageA
@@ -639,7 +645,13 @@ AbstractBackgroundWidget {
 
                         Image {
                             anchors.fill: parent
-                            source: Config.options.sidebar.bannerImage || (Images.isVideoByName(Config.options.background.wallpaperPath) ? Config.options.background.thumbnailPath : Config.options.background.wallpaperPath)
+                            source: {
+                                const banner = Config.options.sidebar.bannerImage;
+                                if (banner && !Images.isVideoByName(banner)) return banner;
+                                return Images.isVideoByName(Config.options.background.wallpaperPath)
+                                    ? Config.options.background.thumbnailPath
+                                    : Config.options.background.wallpaperPath;
+                            }
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                             cache: false

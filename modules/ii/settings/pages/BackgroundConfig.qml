@@ -401,9 +401,28 @@ ContentPage {
 
                 Timer {
                     id: videoReloadTimer
-                    interval: 200
+                    interval: 1000
                     repeat: false
                     onTriggered: Wallpapers.reloadVideoWallpaper()
+                }
+
+                Connections {
+                    target: Config.options.background.video
+                    function onAlignXChanged() {
+                        if (!hOffsetSlider.pressed) {
+                            hOffsetSlider.value = Qt.binding(() => Math.round((Config.options.background.video?.alignX || 0.0) * 100));
+                        }
+                    }
+                    function onAlignYChanged() {
+                        if (!vOffsetSlider.pressed) {
+                            vOffsetSlider.value = Qt.binding(() => Math.round((Config.options.background.video?.alignY || 0.0) * 100));
+                        }
+                    }
+                    function onScaleChanged() {
+                        if (!zoomSlider.pressed) {
+                            zoomSlider.value = Qt.binding(() => Math.round((Config.options.background.video?.scale || 1.0) * 100));
+                        }
+                    }
                 }
 
                 GroupedList {
@@ -423,6 +442,7 @@ ContentPage {
                     }
 
                     ConfigSlider {
+                        id: zoomSlider
                         text: Translation.tr("Zoom")
                         textWidth: 160
                         buttonIcon: "zoom_in"
@@ -430,13 +450,18 @@ ContentPage {
                         from: 20
                         to: 300
                         stepSize: 5
-                        value: Math.round((Config.options.background.video.scale || 1.0) * 100)
+                        value: Math.round((Config.options.background.video?.scale || 1.0) * 100)
                         stopIndicatorValues: [100]
                         onMoved: {
                             const newScale = Math.round(value) / 100.0;
                             if (Config.options.background.video.scale !== newScale) {
                                 Config.options.background.video.scale = newScale;
                                 videoReloadTimer.restart();
+                            }
+                        }
+                        onPressedChanged: {
+                            if (!pressed) {
+                                value = Qt.binding(() => Math.round((Config.options.background.video?.scale || 1.0) * 100));
                             }
                         }
                     }
@@ -454,11 +479,13 @@ ContentPage {
                             if (newValue === "left") Config.options.background.video.alignX = -1.0;
                             else if (newValue === "right") Config.options.background.video.alignX = 1.0;
                             else Config.options.background.video.alignX = 0.0;
+                            hOffsetSlider.value = Qt.binding(() => Math.round((Config.options.background.video?.alignX || 0.0) * 100));
                             videoReloadTimer.restart();
                         }
                     }
 
                     ConfigSlider {
+                        id: hOffsetSlider
                         text: Translation.tr("Horizontal fine offset")
                         textWidth: 160
                         buttonIcon: "swap_horiz"
@@ -466,13 +493,18 @@ ContentPage {
                         from: -100
                         to: 100
                         stepSize: 1
-                        value: Math.round((Config.options.background.video.alignX || 0.0) * 100)
+                        value: Math.round((Config.options.background.video?.alignX || 0.0) * 100)
                         stopIndicatorValues: [0]
                         onMoved: {
                             const newAlign = Math.round(value) / 100.0;
                             if (Config.options.background.video.alignX !== newAlign) {
                                 Config.options.background.video.alignX = newAlign;
                                 videoReloadTimer.restart();
+                            }
+                        }
+                        onPressedChanged: {
+                            if (!pressed) {
+                                value = Qt.binding(() => Math.round((Config.options.background.video?.alignX || 0.0) * 100));
                             }
                         }
                     }
@@ -490,11 +522,13 @@ ContentPage {
                             if (newValue === "top") Config.options.background.video.alignY = -1.0;
                             else if (newValue === "bottom") Config.options.background.video.alignY = 1.0;
                             else Config.options.background.video.alignY = 0.0;
+                            vOffsetSlider.value = Qt.binding(() => Math.round((Config.options.background.video?.alignY || 0.0) * 100));
                             videoReloadTimer.restart();
                         }
                     }
 
                     ConfigSlider {
+                        id: vOffsetSlider
                         text: Translation.tr("Vertical fine offset")
                         textWidth: 160
                         buttonIcon: "swap_vert"
@@ -502,13 +536,18 @@ ContentPage {
                         from: -100
                         to: 100
                         stepSize: 1
-                        value: Math.round((Config.options.background.video.alignY || 0.0) * 100)
+                        value: Math.round((Config.options.background.video?.alignY || 0.0) * 100)
                         stopIndicatorValues: [0]
                         onMoved: {
                             const newAlign = Math.round(value) / 100.0;
                             if (Config.options.background.video.alignY !== newAlign) {
                                 Config.options.background.video.alignY = newAlign;
                                 videoReloadTimer.restart();
+                            }
+                        }
+                        onPressedChanged: {
+                            if (!pressed) {
+                                value = Qt.binding(() => Math.round((Config.options.background.video?.alignY || 0.0) * 100));
                             }
                         }
                     }

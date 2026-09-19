@@ -172,11 +172,13 @@ Item {
                                 StyledImage {
                                     anchors.fill: parent
                                     fillMode: Image.PreserveAspectCrop
-                                    source: Config.options.sidebar.bannerImage !== "" 
-                                        ? Config.options.sidebar.bannerImage 
-                                        : (Images.isVideoByName(Config.options.background.wallpaperPath)
+                                    source: {
+                                        const banner = Config.options.sidebar.bannerImage;
+                                        if (banner && !Images.isVideoByName(banner)) return banner;
+                                        return Images.isVideoByName(Config.options.background.wallpaperPath)
                                             ? Config.options.background.thumbnailPath
-                                            : Config.options.background.wallpaperPath)
+                                            : Config.options.background.wallpaperPath;
+                                    }
                                     cache: false
                                     antialiasing: true
                                     sourceSize.width: wallpaperRect.width * 2

@@ -20,6 +20,7 @@ RowLayout {
     property alias stepSize: slider.stepSize
     property real textWidth: 120
     property bool showLabel: true
+    property alias pressed: slider.pressed
 
     signal moved()
 

@@ -114,7 +114,7 @@ MouseArea {
     Loader {
         anchors.fill: parent
         z: -1
-        active: WM.compositor === "niri"
+        active: WM.compositor !== "hyprland"
 
         sourceComponent: Item {
             anchors.fill: parent
@@ -147,9 +147,10 @@ MouseArea {
                                     return;
                                 }
                                 lockVideoRetryCount++;
-                                const s = lockVideoPlayer.source;
                                 lockVideoPlayer.source = "";
-                                lockVideoPlayer.source = s;
+                                lockVideoPlayer.source = Qt.binding(() => isVideo
+                                    ? ("file://" + FileUtils.trimFileProtocol(effectiveWall))
+                                    : "");
                             }
                             lockVideoPlayer.play();
                         }
@@ -209,7 +210,8 @@ MouseArea {
             Item {
                 id: lockVideoContainer
                 anchors.fill: parent
-                visible: isVideo
+                layer.enabled: Config.options.lock.blur.enable
+                visible: isVideo && !Config.options.lock.blur.enable
                 clip: true
 
                 readonly property real baseW: width
@@ -278,7 +280,8 @@ MouseArea {
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true
-                visible: !isVideo
+                layer.enabled: Config.options.lock.blur.enable
+                visible: !isVideo && !Config.options.lock.blur.enable
             }
 
             GaussianBlur {

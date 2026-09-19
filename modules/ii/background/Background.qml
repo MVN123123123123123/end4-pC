@@ -249,9 +249,10 @@ Variants {
                                     return;
                                 }
                                 bgItem.videoRetryCount++;
-                                const s = videoPlayer.source;
                                 videoPlayer.source = "";
-                                videoPlayer.source = s;
+                                videoPlayer.source = Qt.binding(() => (bgRoot.wallpaperIsVideo && !bgRoot.wallpaperSafetyTriggered)
+                                    ? ("file://" + CF.FileUtils.trimFileProtocol(bgRoot.effectiveWallpaperPath))
+                                    : "");
                             }
                             if (!(WM.compositor === "niri" && GlobalStates.screenLocked) && !bgRoot.hiddenForFullscreen) {
                                 videoPlayer.play();
@@ -322,6 +323,9 @@ Variants {
                     if (bgRoot.hiddenForFullscreen) {
                         videoPlayer.pause();
                     } else if (!(WM.compositor === "niri" && GlobalStates.screenLocked)) {
+                        if (Config.options.background.video?.loop === false && (videoPlayer.playbackState === MediaPlayer.StoppedState || videoPlayer.mediaStatus === MediaPlayer.EndOfMedia)) {
+                            return;
+                        }
                         videoPlayer.play();
                     }
                 }
@@ -334,6 +338,9 @@ Variants {
                     if (WM.compositor === "niri" && GlobalStates.screenLocked) {
                         videoPlayer.pause();
                     } else if (!bgRoot.hiddenForFullscreen) {
+                        if (Config.options.background.video?.loop === false && (videoPlayer.playbackState === MediaPlayer.StoppedState || videoPlayer.mediaStatus === MediaPlayer.EndOfMedia)) {
+                            return;
+                        }
                         videoPlayer.play();
                     }
                 }

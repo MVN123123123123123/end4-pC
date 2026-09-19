@@ -55,7 +55,7 @@ generate_thumbnail() {
     hash="$(md5 "$uri")"
     local out="$CACHE_DIR/$hash.png"
     mkdir -p "$CACHE_DIR"
-    if [ -f "$out" ]; then
+    if [ -s "$out" ]; then
         return
     fi
 
@@ -66,14 +66,24 @@ generate_thumbnail() {
         *.mp4|*.webm|*.mkv|*.avi|*.mov)
             if command -v ffmpegthumbnailer &>/dev/null; then
                 ffmpegthumbnailer -i "$abs_path" -o "$out" -s "$THUMBNAIL_SIZE" 2>/dev/null || true
-            elif command -v ffmpeg &>/dev/null; then
-                ffmpeg -y -i "$abs_path" -vframes 1 -vf "scale=${THUMBNAIL_SIZE}:${THUMBNAIL_SIZE}:force_original_aspect_ratio=decrease" "$out" 2>/dev/null || true
+            fi
+            if [ ! -s "$out" ] && command -v ffmpeg &>/dev/null; then
+                ffmpeg -y -ss 00:00:01 -i "$abs_path" -vframes 1 -vf "scale=${THUMBNAIL_SIZE}:${THUMBNAIL_SIZE}:force_original_aspect_ratio=decrease" "$out" 2>/dev/null || true
+                if [ ! -s "$out" ]; then
+                    ffmpeg -y -i "$abs_path" -vframes 1 -vf "scale=${THUMBNAIL_SIZE}:${THUMBNAIL_SIZE}:force_original_aspect_ratio=decrease" "$out" 2>/dev/null || true
+                fi
+            fi
+            if [ ! -s "$out" ]; then
+                rm -f "$out"
             fi
             return
             ;;
     esac
 
-    magick "$abs_path" -resize "${THUMBNAIL_SIZE}x${THUMBNAIL_SIZE}" "$out"
+    magick "$abs_path" -resize "${THUMBNAIL_SIZE}x${THUMBNAIL_SIZE}" "$out" 2>/dev/null || true
+    if [ ! -s "$out" ]; then
+        rm -f "$out"
+    fi
 }
 
 # Parse arguments

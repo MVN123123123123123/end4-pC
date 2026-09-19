@@ -108,71 +108,39 @@ RESTORE_SCRIPT="$RESTORE_SCRIPT_DIR/__restore_video_wallpaper.sh"
 THUMBNAIL_DIR="$RESTORE_SCRIPT_DIR/mpvpaper_thumbnails"
 
 get_video_opts() {
-    local fit_mode="crop"
-    local scale="1.0"
-    local zoom="0.0"
-    local align_x="0.0"
-    local align_y="0.0"
-    local mute="true"
-    local loop="true"
-
     if [ -f "$SHELL_CONFIG_FILE" ]; then
-        local config_fit=$(jq -r '.background.video.fitMode // "crop"' "$SHELL_CONFIG_FILE" 2>/dev/null)
-        [[ -n "$config_fit" && "$config_fit" != "null" ]] && fit_mode="$config_fit"
-
-        local config_scale=$(jq -r '.background.video.scale // 1.0' "$SHELL_CONFIG_FILE" 2>/dev/null)
-        [[ -n "$config_scale" && "$config_scale" != "null" ]] && scale="$config_scale"
-
-        local config_zoom=$(jq -r '.background.video.zoom // 0.0' "$SHELL_CONFIG_FILE" 2>/dev/null)
-        [[ -n "$config_zoom" && "$config_zoom" != "null" ]] && zoom="$config_zoom"
-
-        local config_ax=$(jq -r '.background.video.alignX // 0.0' "$SHELL_CONFIG_FILE" 2>/dev/null)
-        [[ -n "$config_ax" && "$config_ax" != "null" ]] && align_x="$config_ax"
-
-        local config_ay=$(jq -r '.background.video.alignY // 0.0' "$SHELL_CONFIG_FILE" 2>/dev/null)
-        [[ -n "$config_ay" && "$config_ay" != "null" ]] && align_y="$config_ay"
-
-        local config_mute=$(jq -r 'if (.background?.video?.mute | type) == "boolean" then .background.video.mute else true end' "$SHELL_CONFIG_FILE" 2>/dev/null)
-        [[ -n "$config_mute" && "$config_mute" != "null" ]] && mute="$config_mute"
-
-        local config_loop=$(jq -r 'if (.background?.video?.loop | type) == "boolean" then .background.video.loop else true end' "$SHELL_CONFIG_FILE" 2>/dev/null)
-        [[ -n "$config_loop" && "$config_loop" != "null" ]] && loop="$config_loop"
+        local opts
+        opts=$(jq -r 'try (.background.video // {}) catch {} |
+            (if (.mute | type) == "boolean" then .mute else true end) as $mute |
+            (if (.loop | type) == "boolean" then .loop else true end) as $loop |
+            (.fitMode // "crop") as $fit |
+            (.scale // 1.0) as $scale |
+            (if ($scale | type) == "number" and $scale != 1.0 and $scale > 0 then ($scale | log / (2 | log))
+             elif ($zoom | type) == "number" then $zoom else 0.0 end) as $final_zoom |
+            (if ($ax | type) == "number" then $ax else 0.0 end) as $ax |
+            (if ($ay | type) == "number" then $ay else 0.0 end) as $ay |
+            (if $fit == "fit" then "keepaspect=yes panscan=0.0"
+             elif $fit == "stretch" then "keepaspect=no panscan=0.0"
+             else "keepaspect=yes panscan=1.0" end) as $fit_opts |
+            [
+              "hwdec=auto scale=bilinear interpolation=no video-sync=display-resample load-scripts=no",
+              (if $mute then "no-audio" else empty end),
+              (if $loop then "loop" else empty end),
+              $fit_opts,
+              "video-zoom=\($final_zoom) video-align-x=\($ax) video-align-y=\($ay)"
+            ] | join(" ")' "$SHELL_CONFIG_FILE" 2>/dev/null)
+        if [ -n "$opts" ]; then
+            echo "$opts"
+            return
+        fi
     fi
 
-    local opts="hwdec=auto scale=bilinear interpolation=no video-sync=display-resample load-scripts=no"
-
-    if [ "$mute" == "true" ]; then
-        opts="$opts no-audio"
-    fi
-
-    if [ "$loop" == "true" ]; then
-        opts="$opts loop"
-    fi
-
-    case "$fit_mode" in
-        fit)
-            opts="$opts keepaspect=yes panscan=0.0"
-            ;;
-        stretch)
-            opts="$opts keepaspect=no panscan=0.0"
-            ;;
-        crop|*)
-            opts="$opts keepaspect=yes panscan=1.0"
-            ;;
-    esac
-
-    local final_zoom="$zoom"
-    if (( $(awk -v s="$scale" 'BEGIN { print (s != 1.0 && s > 0) ? 1 : 0 }') )); then
-        final_zoom=$(awk -v s="$scale" 'BEGIN { print log(s)/log(2) }')
-    fi
-
-    opts="$opts video-zoom=$final_zoom video-align-x=$align_x video-align-y=$align_y"
-
-    echo "$opts"
+    echo "hwdec=auto scale=bilinear interpolation=no video-sync=display-resample load-scripts=no no-audio loop keepaspect=yes panscan=1.0 video-zoom=0.0 video-align-x=0.0 video-align-y=0.0"
 }
 
 is_video() {
     local extension="${1##*.}"
+    extension="${extension,,}"
     [[ "$extension" == "mp4" || "$extension" == "webm" || "$extension" == "mkv" || "$extension" == "avi" || "$extension" == "mov" ]] && return 0 || return 1
 }
 
@@ -181,9 +149,11 @@ kill_existing_mpvpaper() {
 }
 
 create_restore_script() {
-    local video_path=$1
+    local video_path="$1"
     local video_opts
     video_opts="$(get_video_opts)"
+    local escaped_video_path
+    printf -v escaped_video_path '%q' "$video_path"
     mkdir -p "$RESTORE_SCRIPT_DIR"
     local tmp="$RESTORE_SCRIPT.tmp.$$$RANDOM"
     cat > "$tmp" << EOF
@@ -195,7 +165,7 @@ pkill -f -9 mpvpaper
 
 if ! pidof qs &>/dev/null && ! pidof quickshell &>/dev/null; then
     for monitor in \$(hyprctl monitors -j | jq -r '.[] | .name'); do
-        setsid mpvpaper -o "$video_opts" "\$monitor" "$video_path" >/dev/null 2>&1 &
+        setsid mpvpaper -o "$video_opts" "\$monitor" $escaped_video_path >/dev/null 2>&1 &
         sleep 0.1
     done
 fi
@@ -216,14 +186,10 @@ EOF
 
 set_wallpaper_and_thumbnail_path() {
     local wp="$1"
-    local tp="$2"
+    local tp="${2:-}"
     if [ -f "$SHELL_CONFIG_FILE" ]; then
         local tmp="${SHELL_CONFIG_FILE}.tmp.$$$RANDOM"
-        if [ -n "$tp" ]; then
-            jq --arg wp "$wp" --arg tp "$tp" '.background.wallpaperPath = $wp | .background.thumbnailPath = $tp' "$SHELL_CONFIG_FILE" > "$tmp" && mv "$tmp" "$SHELL_CONFIG_FILE"
-        else
-            jq --arg wp "$wp" '.background.wallpaperPath = $wp' "$SHELL_CONFIG_FILE" > "$tmp" && mv "$tmp" "$SHELL_CONFIG_FILE"
-        fi
+        jq --arg wp "$wp" --arg tp "$tp" '.background.wallpaperPath = $wp | .background.thumbnailPath = $tp' "$SHELL_CONFIG_FILE" > "$tmp" && mv "$tmp" "$SHELL_CONFIG_FILE"
     fi
 }
 
@@ -312,6 +278,9 @@ switch() {
             if [ ! -s "$thumbnail" ]; then
                 ffmpeg -y -i "$imgpath" -vframes 1 "$thumbnail" 2>/dev/null
             fi
+            if [ ! -s "$thumbnail" ]; then
+                rm -f "$thumbnail"
+            fi
 
             if [[ -z "$colors_only_flag" ]]; then
                 set_wallpaper_and_thumbnail_path "$imgpath" "$thumbnail"
@@ -328,7 +297,7 @@ switch() {
                 fi
             fi
 
-            if [ -f "$thumbnail" ]; then
+            if [ -s "$thumbnail" ]; then
                 matugen_args+=(image "$thumbnail")
                 generate_colors_material_args=(--path "$thumbnail")
                 if [[ -z "$colors_only_flag" ]]; then
@@ -528,10 +497,14 @@ main() {
                 shift
                 ;;
             *)
-                if [[ -z "$imgpath" ]]; then
-                    imgpath="$1"
+                if [[ "$1" == -* ]]; then
+                    shift
+                else
+                    if [[ -z "$imgpath" ]]; then
+                        imgpath="$1"
+                    fi
+                    shift
                 fi
-                shift
                 ;;
         esac
     done

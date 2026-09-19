@@ -34,6 +34,16 @@ Item {
         }
     }
 
+    Connections {
+        target: root.blurSource
+        ignoreUnknownSignals: true
+        function onStatusChanged() {
+            if (root.blurSource && root.blurSource.status === Image.Ready) {
+                root.scheduleUpdate();
+            }
+        }
+    }
+
     FastBlur {
         id: blur
         x: -root.oversample
@@ -70,6 +80,7 @@ Item {
                 var p2 = root.mapToItem(root.blurSource, root.width + root.oversample, root.height + root.oversample)
                 return Qt.rect(Math.min(p1.x, p2.x), Math.min(p1.y, p2.y), Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y))
             }
+            onSourceRectChanged: root.scheduleUpdate()
             hideSource: false
             live: root.live
         }

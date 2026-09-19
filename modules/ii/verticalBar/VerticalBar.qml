@@ -84,7 +84,6 @@ Scope {
                 MouseArea {
                     id: hoverRegion
                     hoverEnabled: true
-                    readonly property bool barHidden: Config?.options.bar.autoHide.enable && !barRoot.mustShow
                     anchors {
                         fill: parent
                         rightMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right ? 1 : 0)
@@ -92,14 +91,14 @@ Scope {
 
                     Item {
                         id: hoverMaskRegion
-                        anchors {
-                            top: parent.top
-                            bottom: parent.bottom
-                            left: (!Config.options.bar.bottom && hoverRegion.barHidden) ? parent.left : barContent.left
-                            right: (Config.options.bar.bottom && hoverRegion.barHidden) ? parent.right : barContent.right
-                            leftMargin: (Config.options.bar.bottom && hoverRegion.barHidden) ? -Config.options.bar.autoHide.hoverRegionWidth : 0
-                            rightMargin: (!Config.options.bar.bottom && hoverRegion.barHidden) ? -Config.options.bar.autoHide.hoverRegionWidth : 0
-                        }
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        x: !Config.options.bar.bottom
+                            ? 0
+                            : Math.min(barContent.x, parent.width - (Config.options.bar.autoHide.enable ? Config.options.bar.autoHide.hoverRegionWidth : 0))
+                        width: !Config.options.bar.bottom
+                            ? Math.max(barContent.x + barContent.width, Config.options.bar.autoHide.enable ? Config.options.bar.autoHide.hoverRegionWidth : 0)
+                            : (parent.width - x)
                     }
 
                     RoundCorner {

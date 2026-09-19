@@ -36,14 +36,6 @@ Singleton {
         "jpg", "jpeg", "png", "webp", "avif", "bmp", "svg",
         "mp4", "webm", "mkv", "avi", "mov"
     ]
-    readonly property list<string> videoExtensions: [
-        "mp4", "webm", "mkv", "avi", "mov"
-    ]
-    function isVideo(path) {
-        if (!path) return false;
-        const clean = FileUtils.trimFileProtocol(path).toLowerCase();
-        return videoExtensions.some(ext => clean.endsWith("." + ext));
-    }
     signal videoWallpaperReloadRequested()
     function reloadVideoWallpaper() {
         root.videoWallpaperReloadRequested();
