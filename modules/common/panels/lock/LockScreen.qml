@@ -97,6 +97,7 @@ Scope {
 
     function lock() {
         if (Config.options.lock.useHyprlock) {
+            GlobalStates.startupLockPending = false;
             Quickshell.execDetached(["bash", "-c", "pidof hyprlock || hyprlock"]);
             return;
         }
