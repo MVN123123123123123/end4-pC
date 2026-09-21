@@ -49,7 +49,7 @@ StyledImage {
             if (isVid) {
                 return [
                     "bash", "-c",
-                    'out="$1"; src="$2"; sz="$3"; [ -s "$out" ] && exit 0 || { mkdir -p "$(dirname "$out")" && (ffmpegthumbnailer -i "$src" -o "$out" -s "$sz" 2>/dev/null || { ffmpeg -y -ss 00:00:01 -i "$src" -vframes 1 -vf "scale=${sz}:${sz}:force_original_aspect_ratio=decrease" "$out" 2>/dev/null; if [ ! -s "$out" ]; then ffmpeg -y -i "$src" -vframes 1 -vf "scale=${sz}:${sz}:force_original_aspect_ratio=decrease" "$out" 2>/dev/null; fi; }); if [ -s "$out" ]; then exit 1; else rm -f "$out"; exit 2; fi; }',
+                    'out="$1"; src="$2"; sz="$3"; [ -s "$out" ] && exit 0 || { mkdir -p "$(dirname "$out")" && tmp="${out}.$$.tmp.png" && (ffmpegthumbnailer -i "$src" -o "$tmp" -s "$sz" 2>/dev/null || { ffmpeg -y -ss 00:00:01 -i "$src" -vframes 1 -vf "scale=${sz}:${sz}:force_original_aspect_ratio=decrease" "$tmp" 2>/dev/null; if [ ! -s "$tmp" ]; then ffmpeg -y -i "$src" -vframes 1 -vf "scale=${sz}:${sz}:force_original_aspect_ratio=decrease" "$tmp" 2>/dev/null; fi; }) && mv -f "$tmp" "$out"; if [ -s "$out" ]; then exit 1; else rm -f "$tmp" "$out"; exit 2; fi; }',
                     "_",
                     outPath,
                     srcPath,
@@ -58,7 +58,7 @@ StyledImage {
             }
             return [
                 "bash", "-c", 
-                'out="$1"; src="$2"; sz="$3"; [ -s "$out" ] && exit 0 || { mkdir -p "$(dirname "$out")" && magick "$src" -resize "${sz}x${sz}" "$out" 2>/dev/null; if [ -s "$out" ]; then exit 1; else rm -f "$out"; exit 2; fi; }',
+                'out="$1"; src="$2"; sz="$3"; [ -s "$out" ] && exit 0 || { mkdir -p "$(dirname "$out")" && tmp="${out}.$$.tmp.png" && magick "$src" -resize "${sz}x${sz}" "$tmp" 2>/dev/null && mv -f "$tmp" "$out"; if [ -s "$out" ]; then exit 1; else rm -f "$tmp" "$out"; exit 2; fi; }',
                 "_",
                 outPath,
                 srcPath,
@@ -66,7 +66,7 @@ StyledImage {
             ];
         }
         onExited: (exitCode, exitStatus) => {
-            if (exitCode === 1) { // Force reload if thumbnail had to be generated
+            if (exitCode === 1) {
                 root.source = "";
                 root.source = Qt.binding(() => root.thumbnailPath);
             }

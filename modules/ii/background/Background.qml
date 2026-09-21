@@ -136,7 +136,7 @@ Variants {
                 bgRoot.transitionPending = false
                 return
             }
-            if (bgRoot.wallpaperAnimation === "") {
+            if (bgRoot.wallpaperAnimation === "" || GlobalStates.startupLockPending) {
                 bgRoot.transitionPending = false
                 wallpaper.source = wallpaperPath
                 previousWallpaper.source = wallpaperPath
@@ -210,7 +210,7 @@ Variants {
         Item {
             id: bgItem
             anchors.fill: parent
-            opacity: bgRoot.hiddenForFullscreen ? 0 : 1
+            opacity: (bgRoot.hiddenForFullscreen || GlobalStates.startupLockPending) ? 0 : 1
             enabled: !bgRoot.hiddenForFullscreen
             
             Behavior on opacity {
