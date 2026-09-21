@@ -19,13 +19,15 @@ Singleton {
 
     function setIdle(lock: int, screenOff: int, suspend: int) {
         Quickshell.execDetached([
-            "python3", root.idleConfiguratorScriptPath,
-            "--file", root.hypridlePath,
-            "--lock", String(lock),
-            "--screen-off", String(screenOff),
-            "--suspend", String(suspend)
+            "bash", "-c",
+            'python3 "$1" --file "$2" --lock "$3" --screen-off "$4" --suspend "$5" && { pkill -x hypridle; sleep 0.3; setsid -f hypridle >/dev/null 2>&1; }',
+            "_",
+            root.idleConfiguratorScriptPath,
+            root.hypridlePath,
+            String(lock),
+            String(screenOff),
+            String(suspend)
         ])
-        Quickshell.execDetached(["bash", "-c", "pkill -x hypridle; sleep 0.3; setsid -f hypridle >/dev/null 2>&1"])
     }
 
     function set(key: string, value: var) {

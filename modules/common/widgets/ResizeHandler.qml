@@ -145,12 +145,14 @@ Canvas {
                 centerX = center.x
                 centerY = center.y
                 var globalPos = mapToItem(null, mouse.x, mouse.y)
+                if (!globalPos) return;
                 startAngle = Math.atan2(globalPos.y - centerY, globalPos.x - centerX)
                 startRotation = root.currentRotation
             }
             onPositionChanged: (mouse) => {
                 if (!pressed || !root.anchorItem) return
                 var globalPos = mapToItem(null, mouse.x, mouse.y)
+                if (!globalPos) return;
                 var angle = Math.atan2(globalPos.y - centerY, globalPos.x - centerX)
                 var deltaDeg = (angle - startAngle) * 180 / Math.PI
                 root.rotated(startRotation + deltaDeg)

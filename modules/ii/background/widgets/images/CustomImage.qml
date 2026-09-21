@@ -7,6 +7,7 @@ import Qt5Compat.GraphicalEffects
 import Quickshell
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.modules.ii.background.widgets
 
 AbstractBackgroundWidget {
@@ -141,7 +142,8 @@ AbstractBackgroundWidget {
                 }
                 onDropped: (drop) => {
                     if (drop.hasUrls && drop.urls.length > 0) {
-                        var cleanPath = drop.urls[0].toString().replace(/^file:\/\//, "")
+                        var rawPath = FileUtils.trimFileProtocol(drop.urls[0].toString())
+                        var cleanPath = decodeURIComponent(rawPath)
                         var ext = cleanPath.split(".").pop().toLowerCase()
                         var accepted = ["png","jpg","jpeg","webp","avif","bmp","gif","tiff","tif"]
                         if (accepted.indexOf(ext) !== -1) {

@@ -59,30 +59,35 @@ generate_thumbnail() {
         return
     fi
 
+    local tmp="${out}.$$.tmp.png"
     case "${abs_path,,}" in
         *.gif)
             return
             ;;
         *.mp4|*.webm|*.mkv|*.avi|*.mov)
             if command -v ffmpegthumbnailer &>/dev/null; then
-                ffmpegthumbnailer -i "$abs_path" -o "$out" -s "$THUMBNAIL_SIZE" 2>/dev/null || true
+                ffmpegthumbnailer -i "$abs_path" -o "$tmp" -s "$THUMBNAIL_SIZE" 2>/dev/null || true
             fi
-            if [ ! -s "$out" ] && command -v ffmpeg &>/dev/null; then
-                ffmpeg -y -ss 00:00:01 -i "$abs_path" -vframes 1 -vf "scale=${THUMBNAIL_SIZE}:${THUMBNAIL_SIZE}:force_original_aspect_ratio=decrease" "$out" 2>/dev/null || true
-                if [ ! -s "$out" ]; then
-                    ffmpeg -y -i "$abs_path" -vframes 1 -vf "scale=${THUMBNAIL_SIZE}:${THUMBNAIL_SIZE}:force_original_aspect_ratio=decrease" "$out" 2>/dev/null || true
+            if [ ! -s "$tmp" ] && command -v ffmpeg &>/dev/null; then
+                ffmpeg -y -ss 00:00:01 -i "$abs_path" -vframes 1 -vf "scale=${THUMBNAIL_SIZE}:${THUMBNAIL_SIZE}:force_original_aspect_ratio=decrease" "$tmp" 2>/dev/null || true
+                if [ ! -s "$tmp" ]; then
+                    ffmpeg -y -i "$abs_path" -vframes 1 -vf "scale=${THUMBNAIL_SIZE}:${THUMBNAIL_SIZE}:force_original_aspect_ratio=decrease" "$tmp" 2>/dev/null || true
                 fi
             fi
-            if [ ! -s "$out" ]; then
-                rm -f "$out"
+            if [ -s "$tmp" ]; then
+                mv -f "$tmp" "$out"
+            else
+                rm -f "$tmp" "$out"
             fi
             return
             ;;
     esac
 
-    magick "$abs_path" -resize "${THUMBNAIL_SIZE}x${THUMBNAIL_SIZE}" "$out" 2>/dev/null || true
-    if [ ! -s "$out" ]; then
-        rm -f "$out"
+    magick "$abs_path" -resize "${THUMBNAIL_SIZE}x${THUMBNAIL_SIZE}" "$tmp" 2>/dev/null || true
+    if [ -s "$tmp" ]; then
+        mv -f "$tmp" "$out"
+    else
+        rm -f "$tmp" "$out"
     fi
 }
 

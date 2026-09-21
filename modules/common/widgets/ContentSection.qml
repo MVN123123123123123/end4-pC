@@ -23,7 +23,7 @@ ColumnLayout {
         const idx = list.indexOf(root.sectionId)
         if (idx === -1) list.push(root.sectionId)
         else list.splice(idx, 1)
-        Config.options.settings.collapsedSections = list
+        if (Config.options?.settings) Config.options.settings.collapsedSections = list
     }
 
     function collapseAllSiblings() {
@@ -41,7 +41,7 @@ ColumnLayout {
         let preserved = current.filter(id => !siblingIds.includes(id))
         let result = preserved.concat(siblingIds)
 
-        Config.options.settings.collapsedSections = result
+        if (Config.options?.settings) Config.options.settings.collapsedSections = result
     }
 
     Layout.fillWidth: true

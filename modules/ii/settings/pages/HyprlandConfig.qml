@@ -533,13 +533,16 @@ ContentPage {
                 property int displayValue: 60
                 property int displayUnit: 60
                 property bool loaded: false
+                property bool internalChange: false
 
                 signal edited(int newSeconds)
 
                 onSecondsChanged: {
                     const display = idleSection.toDisplay(timerRow.seconds)
-                    timerRow.displayValue = display[0]
+                    timerRow.internalChange = true
                     timerRow.displayUnit = display[1]
+                    timerRow.displayValue = display[0]
+                    timerRow.internalChange = false
                 }
 
                 RowLayout {
@@ -564,7 +567,7 @@ ContentPage {
                         to: 9999
                         stepSize: 1
                         onValueChanged: {
-                            if (!timerRow.loaded) return
+                            if (!timerRow.loaded || timerRow.internalChange) return
                             timerRow.displayValue = value
                             timerRow.edited(value * timerRow.displayUnit)
                         }
