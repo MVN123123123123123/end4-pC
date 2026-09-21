@@ -57,7 +57,7 @@ AbstractWidget {
     onReleased: root.commitPosition()
 
     property bool needsColText: false
-    property color dominantColor: Appearance.colors.colPrimary
+    property color dominantColor: Appearance.colors.colLayer0
     property bool dominantColorIsDark: dominantColor.hslLightness < 0.5
     property color colText: {
         const onNormalBackground = (GlobalStates.screenLocked && Config.options.lock.blur.enable)
@@ -70,6 +70,7 @@ AbstractWidget {
     
     onWallpaperPathChanged: refreshPlacementIfNeeded()
     onPlacementStrategyChanged: refreshPlacementIfNeeded()
+    onNeedsColTextChanged: refreshPlacementIfNeeded()
     Connections {
         target: Config
         function onReadyChanged() { refreshPlacementIfNeeded() }
@@ -105,7 +106,7 @@ AbstractWidget {
                 const output = leastBusyRegionOutputCollector.text;
                 if (output.length === 0) return;
                 const parsedContent = JSON.parse(output);
-                root.dominantColor = parsedContent.dominant_color || Appearance.colors.colPrimary;
+                root.dominantColor = parsedContent.dominant_color || Appearance.colors.colLayer0;
                 if (root.placementStrategy === "free") return;
                 root.targetX = parsedContent.center_x * root.wallpaperScale - root.width / 2;
                 root.targetY  = parsedContent.center_y * root.wallpaperScale - root.height / 2;

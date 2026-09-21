@@ -12,6 +12,7 @@ import Quickshell.Hyprland
 LockScreen {
     id: root
 
+    // Monitor name -> workspace id to restore on unlock (set when locking)
     property var savedWorkspaces: ({})
     property string lastProcessedLockWall: ""
     property bool lastProcessedDarkmode: Appearance.m3colors.darkmode
@@ -21,17 +22,31 @@ LockScreen {
         interval: 150
         repeat: false
         onTriggered: {
+            if (GlobalStates.screenLocked) return;
             var batch = ""
             for (var j = 0; j < Quickshell.screens.length; ++j) {
                 var monName = Quickshell.screens[j].name
                 var wsId = root.savedWorkspaces[monName]
                 if (wsId !== undefined) {
-                    batch += `hyprctl dispatch 'hl.dsp.focus({monitor="${monName}"})'; hyprctl dispatch 'hl.dsp.focus({workspace=${wsId}})';`
+                    batch += `hyprctl dispatch 'hl.dsp.focus({monitor="${monName}"})' 2>/dev/null || hyprctl dispatch focusmonitor "${monName}"; `
+                    batch += `hyprctl dispatch 'hl.dsp.focus({workspace=${wsId}})' 2>/dev/null || hyprctl dispatch workspace ${wsId}; `
                 }
             }
             if (batch.length > 0) {
                 Quickshell.execDetached(["bash", "-c", batch])
             }
+            restoreAnimTimer.restart()
+        }
+    }
+
+    Timer {
+        id: restoreAnimTimer
+        interval: 800
+        repeat: false
+        onTriggered: {
+            if (GlobalStates.screenLocked) return;
+            var restoreAnimCmd = `hyprctl eval 'hl.animation({ leaf = "workspaces", enabled = true, speed = 7, bezier = "menu_decel", style = "slide" })' 2>/dev/null || hyprctl keyword animation workspaces,1,7,menu_decel,slide 2>/dev/null`
+            Quickshell.execDetached(["bash", "-c", restoreAnimCmd])
         }
     }
 
@@ -58,27 +73,30 @@ LockScreen {
             var modeChanged = Appearance.m3colors.darkmode !== root.lastProcessedDarkmode
 
             if (GlobalStates.screenLocked) {
+                restoreTimer.stop()
+                restoreAnimTimer.stop()
+
                 if (Config.options.background.lockWall !== "" && (wallChanged || modeChanged)) {
                     lockThemeProc.running = true
                 } else if (Config.options.background.lockWall !== "") {
                     MaterialThemeLoader.useLockTheme()
                 }
-                
-                if (WM.compositor === "niri") {
+
+                if (WM.compositor !== "hyprland") {
                     return;
                 }
 
                 var next = {}
-                var batch = "keyword animation workspaces,1,7,menu_decel,slidevert; "
+                var setAnimCmd = `hyprctl eval 'hl.animation({ leaf = "workspaces", enabled = true, speed = 7, bezier = "menu_decel", style = "slidevert" })' 2>/dev/null || hyprctl keyword animation workspaces,1,7,menu_decel,slidevert 2>/dev/null; `
+                var batch = setAnimCmd
                 for (var i = 0; i < Quickshell.screens.length; ++i) {
                     var mon = Quickshell.screens[i].name
                     var mData = HyprlandData.monitors.find(m => m.name === mon)
-                    if (mData?.activeWorkspace == undefined) {
-                        return;
-                    }
-                    var ws = (mData?.activeWorkspace?.id ?? 1)
+                    var ws = (mData && mData.activeWorkspace && mData.activeWorkspace.id) ? mData.activeWorkspace.id : (i + 1)
                     next[mon] = ws
-                    batch += `hyprctl dispatch 'hl.dsp.focus({monitor="${mon}"})'; hyprctl dispatch 'hl.dsp.focus({workspace=${2147483647 - ws}})';`
+                    var tempWs = ws + 100 + (i * 10)
+                    batch += `hyprctl dispatch 'hl.dsp.focus({monitor="${mon}"})' 2>/dev/null || hyprctl dispatch focusmonitor "${mon}"; `
+                    batch += `hyprctl dispatch 'hl.dsp.focus({workspace=${tempWs}})' 2>/dev/null || hyprctl dispatch workspace ${tempWs}; `
                 }
                 root.savedWorkspaces = next
                 Quickshell.execDetached(["bash", "-c", batch])
@@ -86,13 +104,14 @@ LockScreen {
                 if (Config.options.background.lockWall !== "") {
                     MaterialThemeLoader.useLiveTheme()
                 }
-                if (WM.compositor !== "niri") {
+                if (WM.compositor === "hyprland") {
                     restoreTimer.start()
                 }
             }
         }
     }
 
+    // Push everything down (visual only; workspace switch is in Connections above)
     Variants {
         model: Quickshell.screens
         delegate: Scope {
