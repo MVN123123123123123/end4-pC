@@ -589,7 +589,7 @@ ContentPage {
                                 try {
                                     const data = JSON.parse(text())
                                     const rawWallpaper = data?.background?.wallpaperPath ?? ""
-                                    const isVideo = /\.(mp4|webm|mkv|avi|mov)$/i.test(rawWallpaper)
+                                    const isVideo = Images.isVideoByName(rawWallpaper)
                                     presetDelegate.presetWallpaper = isVideo
                                         ? (data?.background?.thumbnailPath ?? "")
                                         : rawWallpaper
@@ -637,7 +637,7 @@ ContentPage {
                                     try {
                                         const data = JSON.parse(text())
                                         const rawWallpaper = data?.background?.wallpaperPath ?? ""
-                                        const isVideo = /\.(mp4|webm|mkv|avi|mov)$/i.test(rawWallpaper)
+                                        const isVideo = Images.isVideoByName(rawWallpaper)
                                         onlineDelegate.presetWallpaper = isVideo
                                             ? (data?.background?.thumbnailPath ?? "")
                                             : rawWallpaper
@@ -690,7 +690,7 @@ ContentPage {
                                 try {
                                     const data = JSON.parse(text())
                                     const rawWallpaper = data?.background?.wallpaperPath ?? ""
-                                    const isVideo = /\.(mp4|webm|mkv|avi|mov)$/i.test(rawWallpaper)
+                                    const isVideo = Images.isVideoByName(rawWallpaper)
                                     importedDelegate.presetWallpaper = isVideo
                                         ? (data?.background?.thumbnailPath ?? "")
                                         : rawWallpaper

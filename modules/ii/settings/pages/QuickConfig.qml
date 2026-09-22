@@ -383,7 +383,7 @@ ContentPage {
                     anchors.fill: parent
                     sourceSize.height: 1080
                     fillMode: Image.PreserveAspectCrop
-                    source: /\.(mp4|webm|mkv|avi|mov)$/i.test(Config.options.background.wallpaperPath)
+                    source: Images.isVideoByName(Config.options.background.wallpaperPath)
                         ? Config.options.background.thumbnailPath
                         : Config.options.background.wallpaperPath
                     cache: false

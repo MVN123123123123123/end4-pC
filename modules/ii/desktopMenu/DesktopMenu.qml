@@ -31,7 +31,7 @@ Scope {
 
     function displayPathFor(path) {
         if (!path) return path
-        return /\.(mp4|webm|mkv|avi|mov)$/i.test(path)
+        return Images.isVideoByName(path)
             ? Config.options.background.thumbnailPath
             : path
     }
