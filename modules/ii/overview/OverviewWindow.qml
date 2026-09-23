@@ -38,7 +38,7 @@ Item { // Window
     property real xOffset: 0
     property real yOffset: 0
     property var widgetMonitor
-    property int widgetMonitorId: widgetMonitor.id
+    property int widgetMonitorId: widgetMonitor?.id ?? -1
     property real workspaceWidth: 0
     property real workspaceHeight: 0
 
@@ -47,8 +47,8 @@ Item { // Window
         const wsId = windowData.workspace?.id;
         if (!wsId) return 0;
         let count = 0;
-        for (const addr of root.windowAddresses) {
-            const w = root.windowByAddress[addr];
+        for (const addr of (root.windowAddresses || [])) {
+            const w = root.windowByAddress ? root.windowByAddress[addr] : null;
             if (w && w.workspace?.id === wsId && !w.floating && !w.fullscreen) count++;
         }
         return count;

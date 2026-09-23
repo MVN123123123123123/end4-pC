@@ -20,14 +20,14 @@ Item {
     Behavior on implicitWidth {
         NumberAnimation {
             duration: Appearance.animation.elementMoveFast.duration
-            easing.type: Appearance.animation.elementMoveFast.easing
+            easing.type: Appearance.animation.elementMoveFast.type
         }
     }
 
     Behavior on implicitHeight {
         NumberAnimation {
             duration: Appearance.animation.elementMoveFast.duration
-            easing.type: Appearance.animation.elementMoveFast.easing
+            easing.type: Appearance.animation.elementMoveFast.type
         }
     }
 

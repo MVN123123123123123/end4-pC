@@ -22,7 +22,9 @@ Variants {
             id: backdrop
             screen: loader.modelData
 
-            property string wallpaperPath: Config.options.background.wallpaperPath
+            property string wallpaperPath: Images.isVideoByName(Config.options.background.wallpaperPath)
+                ? Config.options.background.thumbnailPath
+                : Config.options.background.wallpaperPath
 
             WlrLayershell.layer: WlrLayer.Background
             WlrLayershell.namespace: "quickshell:wallpaper"
