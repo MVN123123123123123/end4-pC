@@ -74,6 +74,15 @@ Item {
             onValueChanged: Config.options.background.widgets.blurRadius = value
         }
 
+        ConfigSwitch {
+            Layout.fillWidth: true
+            buttonIcon: "visibility_off"
+            text: Translation.tr("Pause blur when covered")
+            visible: Config.options.background.widgets.blurWidgets
+            checked: Config.options.background.widgets.pauseBlurWhenCovered ?? true
+            onCheckedChanged: Config.options.background.widgets.pauseBlurWhenCovered = checked
+        }
+
         Rectangle {
             Layout.fillWidth: true
             Layout.topMargin: 4

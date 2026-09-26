@@ -59,4 +59,5 @@ Singleton {
     function biggestWindowForWorkspace(wsId) { return backend?.biggestWindowForWorkspace(wsId) ?? null }
     function fullscreenOnMonitor(monitorName) { return backend?.fullscreenOnMonitor(monitorName) ?? false }
     function monitorGeometry(screen) { return backend?.monitorGeometry(screen) ?? { x: 0, y: 0, scale: 1 } }
+    function isRegionCovered(screenName, x, y, width, height) { return backend?.isRegionCovered(screenName, x, y, width, height) ?? false }
 }

@@ -1,6 +1,7 @@
 import QtQuick
 import Qt5Compat.GraphicalEffects
 import qs.modules.common
+import qs.services
 
 Item {
     id: root
@@ -11,9 +12,21 @@ Item {
     property real blurRadius: Config.options.background.widgets.blurRadius ?? 32
     property real trackX: 0
     property real trackY: 0
-    property bool live: Boolean(root.blurSource && root.blurSource.isVideo)
+    property bool isCovered: {
+        if (!Config.ready || !(Config.options.background.widgets.pauseBlurWhenCovered ?? true)) return false;
+        var scrName = (root.Window.window?.screen?.name) || "";
+        if (!scrName && root.blurSource) {
+            scrName = (root.blurSource.Window.window?.screen?.name) || "";
+        }
+        if (!scrName) return false;
+        var pt = root.blurSource ? root.mapToItem(root.blurSource, 0, 0) : root.mapToItem(null, 0, 0);
+        if (!pt || isNaN(pt.x) || isNaN(pt.y)) return false;
+        return WM.isRegionCovered(scrName, pt.x, pt.y, root.width, root.height);
+    }
+    property bool live: Boolean(root.blurSource && root.blurSource.isVideo) && !root.isCovered
 
     function scheduleUpdate() {
+        if (root.isCovered) return;
         shaderSource.scheduleUpdate();
     }
 
@@ -23,6 +36,11 @@ Item {
     onYChanged: scheduleUpdate()
     onWidthChanged: scheduleUpdate()
     onHeightChanged: scheduleUpdate()
+    onIsCoveredChanged: {
+        if (!isCovered) {
+            scheduleUpdate();
+        }
+    }
 
     readonly property real oversample: blurRadius * 1.5
 

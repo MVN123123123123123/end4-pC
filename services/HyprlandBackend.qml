@@ -64,6 +64,10 @@ Scope {
         return { x: m.x, y: m.y, scale: m.scale };
     }
 
+    function isRegionCovered(screenName, x, y, width, height) {
+        return HyprlandData.isRegionCovered(screenName, x, y, width, height);
+    }
+
     Component.onCompleted: refresh()
 
     function refresh() {

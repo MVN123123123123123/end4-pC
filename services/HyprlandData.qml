@@ -22,8 +22,53 @@ Singleton {
     property var activeWorkspace: null
     property var monitors: []
     property var layers: ({})
+    property int windowRevision: 0
 
     // Convenient stuff
+
+    function isRegionCovered(screenName, rx, ry, rw, rh) {
+        var _rev = root.windowRevision;
+        if (!root.windowList || root.windowList.length === 0) return false;
+
+        var mon = null;
+        if (root.monitors && root.monitors.length > 0) {
+            mon = root.monitors.find(m => m.name === screenName);
+        }
+        var monX = mon ? mon.x : 0;
+        var monY = mon ? mon.y : 0;
+
+        var activeWsId = -1;
+        if (typeof Hyprland !== "undefined" && Hyprland.workspaces) {
+            var hlWs = Hyprland.workspaces.values.find(w => w.monitor && w.monitor.name === screenName && w.active);
+            if (hlWs) activeWsId = hlWs.id;
+        }
+        if (activeWsId === -1 && mon && mon.activeWorkspace) {
+            activeWsId = mon.activeWorkspace.id;
+        }
+        if (activeWsId === -1 && root.activeWorkspace) {
+            activeWsId = root.activeWorkspace.id;
+        }
+        if (activeWsId === -1) return false;
+
+        var specialWsId = (mon && mon.specialWorkspace && mon.specialWorkspace.id !== 0) ? mon.specialWorkspace.id : 0;
+
+        for (var i = 0; i < root.windowList.length; ++i) {
+            var w = root.windowList[i];
+            if (!w.mapped || w.hidden) continue;
+            if (w.workspace.id !== activeWsId && w.workspace.id !== specialWsId) continue;
+            if (mon && w.monitor !== undefined && w.monitor !== mon.id) continue;
+
+            var wx = w.at[0] - monX;
+            var wy = w.at[1] - monY;
+            var ww = w.size[0];
+            var wh = w.size[1];
+
+            if (wx <= rx && wy <= ry && (wx + ww) >= (rx + rw) && (wy + wh) >= (ry + rh)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     function toplevelsForWorkspace(workspace) {
         return ToplevelManager.toplevels.values.filter(toplevel => {
@@ -140,7 +185,7 @@ Singleton {
             if (["openlayer", "closelayer", "screencast", "submap", "activelayout"].includes(name)) return;
 
             if (name.startsWith("workspace") || name.startsWith("createworkspace") || name.startsWith("destroyworkspace") || name.startsWith("moveworkspace") || name === "renameworkspace") {
-                root.queueUpdate(false, true, false, false);
+                root.queueUpdate(false, true, true, false);
             } else if (name.startsWith("activespecial")) {
                 root.queueUpdate(false, true, true, false);
             } else if (name.startsWith("openwindow") || name.startsWith("closewindow") || name.startsWith("movewindow")) {
@@ -170,6 +215,7 @@ Singleton {
                     }
                     root.windowByAddress = tempWinByAddress;
                     root.addresses = root.windowList.map(win => win.address);
+                    root.windowRevision++;
                 } catch (e) {
                     console.error("[HyprlandData] Failed to parse clients:", e);
                 }
@@ -185,6 +231,7 @@ Singleton {
             onStreamFinished: {
                 try {
                     root.monitors = JSON.parse(monitorsCollector.text);
+                    root.windowRevision++;
                 } catch (e) {
                     console.error("[HyprlandData] Failed to parse monitors:", e);
                 }
@@ -223,6 +270,7 @@ Singleton {
                     }
                     root.workspaceById = tempWorkspaceById;
                     root.workspaceIds = root.workspaces.map(ws => ws.id);
+                    root.windowRevision++;
                 } catch (e) {
                     console.error("[HyprlandData] Failed to parse workspaces:", e);
                 }
@@ -238,6 +286,7 @@ Singleton {
             onStreamFinished: {
                 try {
                     root.activeWorkspace = JSON.parse(activeWorkspaceCollector.text);
+                    root.windowRevision++;
                 } catch (e) {
                     console.error("[HyprlandData] Failed to parse active workspace:", e);
                 }

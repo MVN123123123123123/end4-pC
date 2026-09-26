@@ -1630,6 +1630,15 @@ ContentPage {
                             Config.options.background.showSnapLines = checked;
                         }
                     }
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: "visibility_off"
+                        text: Translation.tr("Pause widget blur when covered")
+                        checked: Config.options.background.widgets.pauseBlurWhenCovered ?? true
+                        onCheckedChanged: {
+                            Config.options.background.widgets.pauseBlurWhenCovered = checked;
+                        }
+                    }
                 }
             }
         }

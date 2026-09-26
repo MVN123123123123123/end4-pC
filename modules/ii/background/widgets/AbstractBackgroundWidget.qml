@@ -5,6 +5,7 @@ import qs
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets.widgetCanvas
+import qs.services
 
 AbstractWidget {
     id: root
@@ -16,7 +17,15 @@ AbstractWidget {
     required property int scaledScreenHeight
     required property real wallpaperScale
 
+    property var screen: null
     property Item wallpaperItem: null
+
+    readonly property bool isCovered: {
+        if (!Config.ready || GlobalStates.screenLocked || !(Config.options.background.widgets.pauseBlurWhenCovered ?? true)) return false;
+        const scrName = (root.screen?.name) || (root.Window.window?.screen?.name) || "";
+        if (!scrName) return false;
+        return WM.isRegionCovered(scrName, root.x, root.y, root.width, root.height);
+    }
 
     property bool visibleWhenLocked: Config.options.lock.showWidgets
     property var configEntry: Config.options.background.widgets[configEntryName]
