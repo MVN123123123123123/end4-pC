@@ -23,6 +23,16 @@ Item {
 
     implicitWidth: contentColumn.implicitWidth
 
+    property alias contentY: flickable.contentY
+    property alias contentHeight: flickable.contentHeight
+    property alias flickable: flickable
+
+    onContentYChanged: {
+        if (!_wheelAnim.running && !_flingTimer.running) {
+            _targetY = flickable.contentY
+        }
+    }
+
     // =========================================================
     // Inner Flickable
     // =========================================================
