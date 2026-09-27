@@ -50,6 +50,7 @@ ShellRoot {
         Updates.load()
         LyricsService.restartLyrics()
         Idle.load()
+        TabletService.init()
     }
     
     PanelFamilyLoader {

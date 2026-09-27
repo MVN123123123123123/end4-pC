@@ -748,5 +748,19 @@
   "Left Sidebar": "Left Sidebar",
   "Write something here...\nUse '-' to create copyable bullet points, like this:\n\nSheep fricker\n- 4x Slab\n- 1x Boat\n- 4x Redstone Dust\n- 1x Sticky Piston\n- 1x End Rod\n- 4x Redstone Repeater\n- 1x Redstone Torch\n- 1x Sheep": "Write something here...\nUse '-' to create copyable bullet points, like this:\n\nSheep fricker\n- 4x Slab\n- 1x Boat\n- 4x Redstone Dust\n- 1x Sticky Piston\n- 1x End Rod\n- 4x Redstone Repeater\n- 1x Redstone Torch\n- 1x Sheep",
   "Keyboard": "Keyboard",
-  "Gaps In": "Gaps In"
+  "Gaps In": "Gaps In",
+  "Drawing tablet": "Drawing tablet",
+  "No drawing tablet detected. Plug in a tablet to configure settings.": "No drawing tablet detected. Plug in a tablet to configure settings.",
+  "Mapped display": "Mapped display",
+  "All Displays (Desktop)": "All Displays (Desktop)",
+  "Aspect ratio": "Aspect ratio",
+  "Left-handed mode (180°)": "Left-handed mode (180°)",
+  "Lock to display (1:1 shape)": "Lock to display (1:1 shape)",
+  "Full tablet area": "Full tablet area",
+  "Custom area": "Custom area",
+  "Width (mm)": "Width (mm)",
+  "Height (mm)": "Height (mm)",
+  "Offset X (mm)": "Offset X (mm)",
+  "Offset Y (mm)": "Offset Y (mm)",
+  "Reset to defaults": "Reset to defaults"
 }

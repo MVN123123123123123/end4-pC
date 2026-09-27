@@ -42,6 +42,10 @@ ContentPage {
         command: [Directories.aiTranslationScriptPath, translationProc.locale]
     }
 
+    // Keep the tablet list fresh while these settings can be changed.
+    Component.onCompleted: TabletService.polling = true
+    Component.onDestruction: TabletService.polling = false
+
     ColumnLayout {
         id: mainLayout 
         Layout.fillWidth: true   
@@ -394,6 +398,152 @@ ContentPage {
                     checked: Config.options.workSafety.enable.wallpaper
                     onCheckedChanged: {
                         Config.options.workSafety.enable.wallpaper = checked;
+                    }
+                }
+            }
+        }
+
+        ContentSection {
+            icon: "draw"
+            shape: MaterialShape.Shape.Cookie4Sided
+            title: Translation.tr("Drawing tablet")
+            visible: WM.compositor === "hyprland"
+
+            NoticeBox {
+                Layout.fillWidth: true
+                visible: !TabletService.hasTablet
+                text: Translation.tr("No drawing tablet detected. Plug in a tablet to configure settings.")
+            }
+
+            TabletPreview {
+                Layout.fillWidth: true
+                visible: TabletService.hasTablet
+            }
+
+            GroupedList {
+                enabled: TabletService.hasTablet
+                opacity: TabletService.hasTablet ? 1.0 : 0.5
+
+                ConfigComboBox {
+                    Layout.fillWidth: true
+                    buttonIcon: "monitor"
+                    text: Translation.tr("Mapped display")
+                    model: [
+                        { displayName: Translation.tr("All Displays (Desktop)"), value: "" },
+                        ...(WM.monitors ?? []).map(mon => ({ displayName: mon.name, value: mon.name }))
+                    ]
+                    currentValue: Config.options.tablet.output
+                    onSelected: newValue => {
+                        Config.options.tablet.output = newValue;
+                    }
+                }
+
+                ConfigSelectionArray {
+                    text: Translation.tr("Orientation")
+                    icon: "screen_rotation_alt"
+                    currentValue: Config.options.tablet.orientation
+                    onSelected: newValue => {
+                        Config.options.tablet.orientation = newValue;
+                    }
+                    options: [
+                        { displayName: "0°", icon: "crop_landscape", value: 0 },
+                        { displayName: "90°", icon: "crop_portrait", value: 1 },
+                        { displayName: "180°", icon: "flip", value: 2 },
+                        { displayName: "270°", icon: "rotate_90_degrees_ccw", value: 3 }
+                    ]
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "gesture"
+                    text: Translation.tr("Left-handed mode (180°)")
+                    checked: Config.options.tablet.leftHanded
+                    onCheckedChanged: {
+                        Config.options.tablet.leftHanded = checked;
+                    }
+                }
+
+                ConfigSelectionArray {
+                    text: Translation.tr("Aspect ratio")
+                    icon: "aspect_ratio"
+                    currentValue: Config.options.tablet.activeAreaMode
+                    onSelected: newValue => {
+                        Config.options.tablet.activeAreaMode = newValue;
+                    }
+                    options: [
+                        { displayName: Translation.tr("Lock to display (1:1 shape)"), value: "aspectRatio" },
+                        { displayName: Translation.tr("Full tablet area"), value: "full" },
+                        { displayName: Translation.tr("Custom area"), value: "custom" }
+                    ]
+                }
+
+                ConfigRow {
+                    uniform: true
+                    visible: Config.options.tablet.activeAreaMode === "custom"
+                    ConfigSpinBox {
+                        icon: "straighten"
+                        text: Translation.tr("Width (mm)")
+                        value: Config.options.tablet.customWidth
+                        from: 0
+                        to: 2000
+                        stepSize: 1
+                        onValueChanged: {
+                            Config.options.tablet.customWidth = value;
+                        }
+                    }
+                    ConfigSpinBox {
+                        icon: "height"
+                        text: Translation.tr("Height (mm)")
+                        value: Config.options.tablet.customHeight
+                        from: 0
+                        to: 2000
+                        stepSize: 1
+                        onValueChanged: {
+                            Config.options.tablet.customHeight = value;
+                        }
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+                    visible: Config.options.tablet.activeAreaMode === "custom"
+                    ConfigSpinBox {
+                        icon: "swap_horiz"
+                        text: Translation.tr("Offset X (mm)")
+                        value: Config.options.tablet.customX
+                        from: 0
+                        to: 2000
+                        stepSize: 1
+                        onValueChanged: {
+                            Config.options.tablet.customX = value;
+                        }
+                    }
+                    ConfigSpinBox {
+                        icon: "swap_vert"
+                        text: Translation.tr("Offset Y (mm)")
+                        value: Config.options.tablet.customY
+                        from: 0
+                        to: 2000
+                        stepSize: 1
+                        onValueChanged: {
+                            Config.options.tablet.customY = value;
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 8
+                    Layout.rightMargin: 8
+                    spacing: 0
+
+                    RippleButtonWithIcon {
+                        Layout.fillWidth: false
+                        Layout.alignment: Qt.AlignRight
+                        Layout.preferredHeight: 40
+                        nerdIcon: ""
+                        materialIcon: "restart_alt"
+                        mainText: Translation.tr("Reset to defaults")
+                        onClicked: TabletService.resetToDefaults()
                     }
                 }
             }

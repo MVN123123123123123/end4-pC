@@ -880,6 +880,18 @@ Singleton {
                 property string theme: "freedesktop"
             }
 
+            property JsonObject tablet: JsonObject {
+                property string targetDevice: "" // "" = all detected tablets / universal
+                property string output: "" // "" = all displays / desktop, or specific monitor name
+                property int orientation: 0 // 0: Normal, 1: 90°, 2: 180°, 3: 270°
+                property bool leftHanded: false
+                property string activeAreaMode: "aspectRatio" // "aspectRatio", "full", "custom"
+                property real customWidth: 0 // mm
+                property real customHeight: 0 // mm
+                property real customX: 0 // mm
+                property real customY: 0 // mm
+            }
+
             property JsonObject time: JsonObject {
                 // https://doc.qt.io/qt-6/qtime.html#toString
                 property string format: "hh:mm"
