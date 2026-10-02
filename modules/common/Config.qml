@@ -335,6 +335,7 @@ Singleton {
                         property real y: 100
                         property real z: 0
                         property string sizeMode: "2x2"
+                        property bool vertical: false
                         property int clockCount: 4 
                     }
 
@@ -461,6 +462,7 @@ Singleton {
                 property int centeredWallpaperSize: 400
                 property string centeredWallpaperColor: "primaryContainer"
                 property bool centeredWallpaperOnlyWhenLocked: false
+                property string centeredWallpaperImage: ""
                 property string wallpaperAnimation: "magic"
                 property bool enableWallpaperPreview: false
                 property string thumbnailPath: ""
@@ -562,6 +564,7 @@ Singleton {
                     property int shown: 10
                     property bool showAppIcons: false
                     property string indicatorStyle: "dot" // "dot" or "icon"
+                    property string style: "default" // "default", "gnome", "dots", "ticks"
                     property bool alwaysShowNumbers: true
                     property int showNumberDelay: 300 // milliseconds
                     property list<string> numberMap: ["1", "2"] // Characters to show instead of numbers on workspace indicator

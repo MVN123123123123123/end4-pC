@@ -232,6 +232,14 @@ Singleton {
         return true
     }
 
+    function dropShapeImage(urls) {
+        if (!urls || urls.length !== 1) return false
+        const path = FileUtils.trimFileProtocol(decodeURIComponent(urls[0].toString()))
+        if (!root.isImagePath(path)) return false
+        Config.options.background.centeredWallpaperImage = path
+        return true
+    }
+
     Process {
         id: pickProc
         property int tileId: -1

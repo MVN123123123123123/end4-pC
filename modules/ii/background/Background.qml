@@ -556,15 +556,6 @@ Variants {
                 }
             }
 
-            /* Centered Wallpaper */
-            CenteredWallpaper {
-                id: centeredWallpaper
-                anchors.fill: parent
-                screen: bgRoot.screen
-                wallpaperPath: bgRoot.wallpaperPath
-                wallpaperIsVideo: bgRoot.wallpaperIsVideo
-            }
-
             /* Multiple wallpapers */
             Loader {
                 id: collageLoader
@@ -588,6 +579,15 @@ Variants {
                 sourceComponent: MultipleWallsDrop {
                     collage: collageLoader.item
                 }
+            }
+
+            /* Centered Wallpaper */
+            CenteredWallpaper {
+                id: centeredWallpaper
+                anchors.fill: parent
+                screen: bgRoot.screen
+                wallpaperPath: bgRoot.wallpaperPath
+                wallpaperIsVideo: bgRoot.wallpaperIsVideo
             }
 
             /* Widgets Loader */

@@ -32,14 +32,17 @@ ButtonMouseArea {
     property real workspaceIconOpacityShrinked: 1
     property real workspaceIconMarginShrinked: -4
     property int workspaceIndexInGroup: (wsModel.activeNumber - 1) % wsModel.shownCount
+    readonly property string style: Config.options.bar.workspaces.style ?? "default"
+    readonly property bool altStyle: root.style !== "default"
+    readonly property real slotLength: root.style === "gnome" ? 16 : root.style === "dots" ? 24 : root.style === "ticks" ? 16 : root.workspaceButtonWidth
     property real specialTextSize: workspaceButtonWidth * 0.5
 
     Layout.alignment: vertical ? Qt.AlignHCenter : Qt.AlignVCenter
     Layout.fillWidth: vertical
     Layout.fillHeight: !vertical
     readonly property real barThickness: vertical ? Appearance.sizes.verticalBarWidth : Appearance.sizes.barHeight
-    implicitWidth: vertical ? barThickness : occupiedIndicators.implicitWidth
-    implicitHeight: vertical ? occupiedIndicators.implicitHeight : barThickness
+    implicitWidth: vertical ? barThickness : (altStyle ? (altLoader.item?.implicitWidth ?? 0) : occupiedIndicators.implicitWidth)
+    implicitHeight: vertical ? (altStyle ? (altLoader.item?.implicitHeight ?? 0) : occupiedIndicators.implicitHeight) : barThickness
 
     property real specialBlur: (wsModel.specialWorkspaceActive && !containsMouse) ? 1 : 0
     Behavior on specialBlur {
@@ -51,7 +54,8 @@ ButtonMouseArea {
     hoverEnabled: true
     property int hoverIndex: {
         const position = root.vertical ? mouseY : mouseX;
-        return Math.floor(position / root.workspaceButtonWidth);
+        if (root.altStyle && altLoader.item) return altLoader.item.indexAt(position);
+        return Math.floor(position / root.slotLength);
     }
 
     function switchWorkspaceToHovered() {
@@ -76,10 +80,21 @@ ButtonMouseArea {
             WM.switchWorkspaceRelative("prev");
     }
 
+    Loader {
+        id: altLoader
+        active: root.altStyle
+        anchors.centerIn: parent
+        sourceComponent: WorkspacesAlt {
+            host: root
+            model: wsModel
+        }
+    }
+
     // Indications
     Item {
         id: regularWorkspaces
         anchors.fill: parent
+        visible: !root.altStyle
 
         scale: 1 - 0.08 * root.specialBlur
         layer.smooth: true
