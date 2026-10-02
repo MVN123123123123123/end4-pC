@@ -1,6 +1,7 @@
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -116,33 +117,6 @@ AbstractQuickPanel {
                     }
                 }
             }
-
-            Rectangle {
-                id: dropIndicator
-                visible: false
-                z: 99
-                width: 3
-                radius: 2
-                color: Appearance.colors.colPrimary
-
-                Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                Behavior on y { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-
-                Rectangle {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: -4
-                    width: 8; height: 8; radius: 4
-                    color: Appearance.colors.colPrimary
-                }
-                Rectangle {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: -4
-                    width: 8; height: 8; radius: 4
-                    color: Appearance.colors.colPrimary
-                }
-            }
         }
 
         FadeLoader {
@@ -208,5 +182,19 @@ AbstractQuickPanel {
                 Config.options.sidebar.quickToggles.android.columns = value;
             }
         }
+    }
+    Rectangle {
+        id: dropIndicator
+        visible: false
+        z: 99
+        radius: Appearance.rounding.large
+        color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
+        border.width: 2
+        border.color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.35)
+
+        Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on y { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on height { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
     }
 }

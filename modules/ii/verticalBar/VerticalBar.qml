@@ -213,7 +213,8 @@ Scope {
                             right: undefined
                         }
                         width: Appearance.rounding.screenRounding
-                        active: showBarBackground && Config.options.bar.cornerStyle === 0 && !barContent.centerOnly
+                        active: (showBarBackground && Config.options.bar.cornerStyle === 0 && !barContent.centerOnly)
+                             || (Config.options.bar.cornerStyle === 4)
 
                         states: State {
                             name: "right"
@@ -231,15 +232,21 @@ Scope {
 
                         sourceComponent: Item {
                             implicitHeight: Appearance.rounding.screenRounding
+
+                            readonly property color decoratorColor: (Config.options.bar.cornerStyle === 4 || showBarBackground)
+                                ? (Config.options.bar.followFrameColor && Config.options.bar.frameColor
+                                    ? Appearance.getColorFromName(Config.options.bar.frameColor)
+                                    : Appearance.colors.colLayer0)
+                                : "transparent"
+
                             RoundCorner {
                                 id: topCorner
+                                visible: Config.options.bar.cornerStyle === 0 || barContent.effectiveLeftLayout.length > 0
                                 anchors { left: parent.left; right: parent.right; top: parent.top }
                                 implicitSize: Appearance.rounding.screenRounding
-                                color: showBarBackground
-                                    ? (Config.options.bar.followFrameColor && Config.options.bar.frameColor
-                                        ? Appearance.getColorFromName(Config.options.bar.frameColor)
-                                        : Appearance.colors.colLayer0)
-                                    : "transparent"
+                                width: implicitSize
+                                height: implicitSize
+                                color: parent.decoratorColor
                                 corner: RoundCorner.CornerEnum.TopLeft
                                 states: State {
                                     name: "bottom"
@@ -249,17 +256,16 @@ Scope {
                             }
                             RoundCorner {
                                 id: bottomCorner
+                                visible: Config.options.bar.cornerStyle === 0 || barContent.effectiveRightLayout.length > 0
                                 anchors {
                                     bottom: parent.bottom
-                                    left: !Config.options.bar.bottom ? parent.left : undefined
-                                    right: Config.options.bar.bottom ? parent.right : undefined
+                                    left: parent.left
+                                    right: parent.right
                                 }
                                 implicitSize: Appearance.rounding.screenRounding
-                                color: showBarBackground
-                                    ? (Config.options.bar.followFrameColor && Config.options.bar.frameColor
-                                        ? Appearance.getColorFromName(Config.options.bar.frameColor)
-                                        : Appearance.colors.colLayer0)
-                                    : "transparent"
+                                width: implicitSize
+                                height: implicitSize
+                                color: parent.decoratorColor
                                 corner: RoundCorner.CornerEnum.BottomLeft
                                 states: State {
                                     name: "bottom"

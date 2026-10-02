@@ -120,7 +120,7 @@ Item {
                 IconImage {
                     id: ghostIcon
                     anchors.centerIn: parent
-                    source: Quickshell.iconPath(
+                    source: SystemAppearance.iconPath(
                         AppSearch.guessIcon(root._workOrder[root.activeDragVisualIndex] ?? ""),
                         "image-missing")
                     implicitSize: root.btnSize * 0.65
@@ -180,7 +180,7 @@ Item {
                     IconImage {
                         id: appIcon
                         anchors.centerIn: parent
-                        source: Quickshell.iconPath(
+                        source: SystemAppearance.iconPath(
                             AppSearch.guessIcon(slotItem.appId),
                             "image-missing")
                         implicitSize: 33

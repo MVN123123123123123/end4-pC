@@ -20,6 +20,7 @@ ContentPage {
     property string hostnameInput: SystemInfo.hostname
 
     property list<var> onlinePresets: []
+    property int onlinePreviewLoadLimit: 3
     property string onlinePresetsError: ""
     property bool onlinePresetsLoading: false
 
@@ -587,12 +588,7 @@ ContentPage {
                             path: presetDelegate.filePath
                             onLoaded: {
                                 try {
-                                    const data = JSON.parse(text())
-                                    const rawWallpaper = data?.background?.wallpaperPath ?? ""
-                                    const isVideo = Images.isVideoByName(rawWallpaper)
-                                    presetDelegate.presetWallpaper = isVideo
-                                        ? (data?.background?.thumbnailPath ?? "")
-                                        : rawWallpaper
+                                    presetDelegate.presetWallpaper = Presets.previewImage(data)
                                     presetDelegate.presetDescription = data?._presetMeta?.description ?? ""
                                 } catch (e) {
                                     console.log("Failed to parse preset:", e)
@@ -635,12 +631,7 @@ ContentPage {
                                 path: onlineDelegate.filePath
                                 onLoaded: {
                                     try {
-                                        const data = JSON.parse(text())
-                                        const rawWallpaper = data?.background?.wallpaperPath ?? ""
-                                        const isVideo = Images.isVideoByName(rawWallpaper)
-                                        onlineDelegate.presetWallpaper = isVideo
-                                            ? (data?.background?.thumbnailPath ?? "")
-                                            : rawWallpaper
+                                        onlineDelegate.presetWallpaper = Presets.previewImage(data)
                                         onlineDelegate.presetDescription = data?._presetMeta?.description ?? ""
                                     } catch (e) {
                                         console.log("Failed to parse online preset:", e)
@@ -688,12 +679,7 @@ ContentPage {
                             path: importedDelegate.filePath
                             onLoaded: {
                                 try {
-                                    const data = JSON.parse(text())
-                                    const rawWallpaper = data?.background?.wallpaperPath ?? ""
-                                    const isVideo = Images.isVideoByName(rawWallpaper)
-                                    importedDelegate.presetWallpaper = isVideo
-                                        ? (data?.background?.thumbnailPath ?? "")
-                                        : rawWallpaper
+                                    importedDelegate.presetWallpaper = Presets.previewImage(data)
                                     importedDelegate.presetDescription = data?._presetMeta?.description ?? ""
                                 } catch (e) {
                                     console.log("Failed to parse imported preset:", e)
@@ -788,6 +774,7 @@ ContentPage {
                         delegate: Rectangle {
                             id: onlineCard
                             required property var modelData
+                            required property int index
                             implicitWidth: 293
                             implicitHeight: 186
                             radius: Appearance.rounding.normal
@@ -805,16 +792,21 @@ ContentPage {
                                     color: Appearance.colors.colLayer2
 
                                     StyledImage {
+                                        property bool finished: false
                                         anchors.fill: parent
                                         fillMode: Image.PreserveAspectCrop
-                                        source: onlineCard.modelData.screenshot
-                                        cache: false
+                                        source: onlineCard.index < page.onlinePreviewLoadLimit ? onlineCard.modelData.screenshot : ""
+                                        cache: true
                                         antialiasing: true
                                         sourceSize.width: onlineImageRect.width * 2
                                         sourceSize.height: onlineImageRect.height * 2
                                         onStatusChanged: {
                                             if (status === Image.Error) {
                                                 console.log("[onlineCard] failed to load image:", onlineCard.modelData.name, source)
+                                            }
+                                            if (!finished && (status === Image.Ready || status === Image.Error)) {
+                                                finished = true
+                                                page.onlinePreviewLoadLimit += 1
                                             }
                                         }
                                         layer.enabled: true

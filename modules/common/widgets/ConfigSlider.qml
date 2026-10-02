@@ -14,15 +14,14 @@ RowLayout {
     property string buttonIcon: ""
     property alias value: slider.value
     property alias stopIndicatorValues: slider.stopIndicatorValues
+    property alias stepSize: slider.stepSize
+    readonly property alias pressed: slider.pressed
+    signal moved()
     property bool usePercentTooltip: true
     property alias from: slider.from
     property alias to: slider.to
-    property alias stepSize: slider.stepSize
     property real textWidth: 120
     property bool showLabel: true
-    property alias pressed: slider.pressed
-
-    signal moved()
 
     RowLayout {
         id: row

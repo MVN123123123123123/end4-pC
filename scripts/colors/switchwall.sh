@@ -12,6 +12,9 @@ SHELL_CONFIG_FILE="$XDG_CONFIG_HOME/illogical-impulse/config.json"
 MATUGEN_DIR="$XDG_CONFIG_HOME/matugen"
 terminalscheme="$SCRIPT_DIR/terminal/scheme-base.json"
 
+# shellcheck source=../lib/config.sh
+source "$SCRIPT_DIR/../lib/config.sh"
+
 handle_kde_material_you_colors() {
     if [ -f "$SHELL_CONFIG_FILE" ]; then
         enable_qt_apps=$(jq -r '.appearance.wallpaperTheming.enableQtApps' "$SHELL_CONFIG_FILE")
@@ -188,8 +191,7 @@ set_wallpaper_and_thumbnail_path() {
     local wp="$1"
     local tp="${2:-}"
     if [ -f "$SHELL_CONFIG_FILE" ]; then
-        local tmp="${SHELL_CONFIG_FILE}.tmp.$$$RANDOM"
-        jq --arg wp "$wp" --arg tp "$tp" '.background.wallpaperPath = $wp | .background.thumbnailPath = $tp' "$SHELL_CONFIG_FILE" > "$tmp" && mv "$tmp" "$SHELL_CONFIG_FILE"
+        config_json_update "$SHELL_CONFIG_FILE" --arg wp "$wp" --arg tp "$tp" '.background.wallpaperPath = $wp | .background.thumbnailPath = $tp'
     fi
 }
 
@@ -200,8 +202,7 @@ set_wallpaper_path() {
 set_thumbnail_path() {
     local path="$1"
     if [ -f "$SHELL_CONFIG_FILE" ]; then
-        local tmp="${SHELL_CONFIG_FILE}.tmp.$$$RANDOM"
-        jq --arg path "$path" '.background.thumbnailPath = $path' "$SHELL_CONFIG_FILE" > "$tmp" && mv "$tmp" "$SHELL_CONFIG_FILE"
+        config_json_update "$SHELL_CONFIG_FILE" --arg path "$path" '.background.thumbnailPath = $path'
     fi
 }
 
@@ -435,7 +436,7 @@ main() {
     }
     set_accent_color() {
         local color="$1"
-        jq --arg color "$color" '.appearance.palette.accentColor = $color' "$SHELL_CONFIG_FILE" > "$SHELL_CONFIG_FILE.tmp" && mv "$SHELL_CONFIG_FILE.tmp" "$SHELL_CONFIG_FILE"
+        config_json_update "$SHELL_CONFIG_FILE" --arg color "$color" '.appearance.palette.accentColor = $color'
     }
 
     detect_scheme_type_from_image() {

@@ -12,6 +12,9 @@ import Quickshell
 
 ButtonMouseArea {
     id: root
+    property color contentColor: Appearance.colors.colOnLayer1
+    property bool contentColorOverridden: false
+    signal styleEditorRequested()
 
     WorkspaceModel {
         id: wsModel
@@ -21,7 +24,7 @@ ButtonMouseArea {
     property bool vertical: Config.options.bar.vertical
     property bool superPressAndHeld: false // Relevant modifications at bottom of file
 
-    property real workspaceButtonWidth: Config.options.bar.cornerStyle === 3 ? 30 : 26
+    property real workspaceButtonWidth: (Config.options.bar.cornerStyle === 3 || Config.options.bar.cornerStyle === 4) ? 30 : 26
     property real activeWorkspaceMargin: 2
     property real activeWorkspaceSize: workspaceButtonWidth - activeWorkspaceMargin * 2
     property real workspaceIconSize: workspaceButtonWidth * 0.69
@@ -57,8 +60,14 @@ ButtonMouseArea {
     onPressed: mouse => {
         if (mouse.button == Qt.LeftButton)
             switchWorkspaceToHovered();
-        else if (mouse.button == Qt.RightButton)
+    }
+    onClicked: mouse => {
+        if (mouse.button == Qt.RightButton)
             GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
+    }
+    onPressAndHold: mouse => {
+        if (mouse.button == Qt.RightButton)
+            root.styleEditorRequested();
     }
     onWheel: event => {
         if (event.angleDelta.y < 0)
@@ -208,7 +217,7 @@ ButtonMouseArea {
                 delegate: WorkspaceItem {
                     id: wsApp
                     property var biggestWindow: wsModel.biggestWindow[index]
-                    property var mainAppIconSource: Quickshell.iconPath(AppSearch.guessIcon(biggestWindow?.class), "image-missing")
+                    property var mainAppIconSource: SystemAppearance.iconPath(AppSearch.guessIcon(biggestWindow?.class), "image-missing")
 
                     AppIcon {
                         id: appIcon
@@ -360,7 +369,7 @@ ButtonMouseArea {
         id: wsNum
         property bool hasBiggestWindow: !!wsModel.biggestWindow[index]
         property int wsId: wsModel.getWorkspaceIdAt(index)
-        property color contentColor: (wsModel.occupied[wsNum.index] && wsId !== wsModel.fakeWorkspace) ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1Inactive
+        property color contentColor: (wsModel.occupied[wsNum.index] && wsId !== wsModel.fakeWorkspace) ? Appearance.colors.colOnSecondaryContainer : (root.contentColorOverridden ? Qt.alpha(root.contentColor, 0.5) : Appearance.colors.colOnLayer1Inactive)
         property bool showingNumbers: {
             if (root.superPressAndHeld)
                 return true;

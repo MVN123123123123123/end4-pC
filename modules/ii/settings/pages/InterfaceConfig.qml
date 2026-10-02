@@ -9,31 +9,6 @@ ContentPage {
     id: page
     forceWidth: true
 
-    function goTo(term) {
-        const t = term.toLowerCase().trim()
-
-        function findTarget(rootItem) {
-            for (let i = 0; i < rootItem.children.length; i++) {
-                let child = rootItem.children[i]
-                if (child.title && child.title.toLowerCase().includes(t)) {
-                    return child
-                }
-            }
-
-            for (let i = 0; i < rootItem.children.length; i++) {
-                let found = findTarget(rootItem.children[i])
-                if (found) return found
-            }
-            return null
-        }
-
-        let target = findTarget(mainLayout)
-        if (target) {
-            let pos = target.mapToItem(mainLayout, 0, 0)
-            page.contentY = Math.max(0, pos.y - 0)
-        }
-    }
-
     ColumnLayout {
         id: mainLayout 
         Layout.fillWidth: true   
@@ -1177,144 +1152,82 @@ ContentPage {
             title: Translation.tr("Fonts")
 
             GroupedList {
-                ConfigTextArea {
-                    id: mainFontField
+                ConfigComboBox {
                     Layout.fillWidth: true
                     buttonIcon: "font_download"
-                    text: Translation.tr("Font family name (e.g., Google Sans Flex)")
-                    value: Config.options.appearance.fonts.main
-                    onValueChanged: {
-                        mainFontDebounceTimer.restart();
-                    }
-
-                    Timer {
-                        id: mainFontDebounceTimer
-                        interval: 1000
-                        running: false
-                        onTriggered: {
-                            Config.options.appearance.fonts.main = mainFontField.value;
-                        }
-                    }
+                    text: Translation.tr("Main font")
+                    fieldWidth: 260
+                    fixedWidth: true
+                    searchable: true
+                    model: SystemAppearance.fontOptions(Config.options.appearance.fonts.main)
+                    currentValue: Config.options.appearance.fonts.main
+                    onSelected: newValue => { Config.options.appearance.fonts.main = newValue }
                 }
-
-                ConfigTextArea {
-                    id: numbersFontField
+                ConfigComboBox {
                     Layout.fillWidth: true
                     buttonIcon: "123"
-                    text: Translation.tr("Numbers family name")
-                    value: Config.options.appearance.fonts.numbers
-                    onValueChanged: {
-                        numbersFontDebounceTimer.restart();
-                    }
-
-                    Timer {
-                        id: numbersFontDebounceTimer
-                        interval: 1000
-                        running: false
-                        onTriggered: {
-                            Config.options.appearance.fonts.numbers = numbersFontField.value;
-                        }
-                    }
+                    text: Translation.tr("Numbers font")
+                    fieldWidth: 260
+                    fixedWidth: true
+                    searchable: true
+                    model: SystemAppearance.fontOptions(Config.options.appearance.fonts.numbers)
+                    currentValue: Config.options.appearance.fonts.numbers
+                    onSelected: newValue => { Config.options.appearance.fonts.numbers = newValue }
                 }
-
-                ConfigTextArea {
-                    id: titleFontField
+                ConfigComboBox {
                     Layout.fillWidth: true
                     buttonIcon: "title"
-                    text: Translation.tr("Title family name")
-                    value: Config.options.appearance.fonts.title
-                    onValueChanged: {
-                        titleFontDebounceTimer.restart();
-                    }
-
-                    Timer {
-                        id: titleFontDebounceTimer
-                        interval: 1000
-                        running: false
-                        onTriggered: {
-                            Config.options.appearance.fonts.title = titleFontField.value;
-                        }
-                    }
+                    text: Translation.tr("Title font")
+                    fieldWidth: 260
+                    fixedWidth: true
+                    searchable: true
+                    model: SystemAppearance.fontOptions(Config.options.appearance.fonts.title)
+                    currentValue: Config.options.appearance.fonts.title
+                    onSelected: newValue => { Config.options.appearance.fonts.title = newValue }
                 }
-
-                ConfigTextArea {
-                    id: monospaceFontField
+                ConfigComboBox {
                     Layout.fillWidth: true
                     buttonIcon: "space_bar"
-                    text: Translation.tr("Monospace font name (e.g., JetBrains Mono NF)")
-                    value: Config.options.appearance.fonts.monospace
-                    onValueChanged: {
-                        monospaceFontDebounceTimer.restart();
-                    }
-
-                    Timer {
-                        id: monospaceFontDebounceTimer
-                        interval: 1000
-                        running: false
-                        onTriggered: {
-                            Config.options.appearance.fonts.monospace = monospaceFontField.value;
-                        }
-                    }
+                    text: Translation.tr("Monospace font")
+                    fieldWidth: 260
+                    fixedWidth: true
+                    searchable: true
+                    model: SystemAppearance.fontOptions(Config.options.appearance.fonts.monospace)
+                    currentValue: Config.options.appearance.fonts.monospace
+                    onSelected: newValue => { Config.options.appearance.fonts.monospace = newValue }
                 }
-
-                ConfigTextArea {
-                    id: iconNerdFontField
+                ConfigComboBox {
                     Layout.fillWidth: true
                     buttonIcon: "emoticon"
-                    text: Translation.tr("Nerd Fonts Icons (e.g., JetBrains Mono NF)")
-                    value: Config.options.appearance.fonts.iconNerd
-                    onValueChanged: {
-                        iconNerdFontDebounceTimer.restart();
-                    }
-
-                    Timer {
-                        id: iconNerdFontDebounceTimer
-                        interval: 1000
-                        running: false
-                        onTriggered: {
-                            Config.options.appearance.fonts.iconNerd = iconNerdFontField.value;
-                        }
-                    }
+                    text: Translation.tr("Nerd Fonts icons")
+                    fieldWidth: 260
+                    fixedWidth: true
+                    searchable: true
+                    model: SystemAppearance.fontOptions(Config.options.appearance.fonts.iconNerd)
+                    currentValue: Config.options.appearance.fonts.iconNerd
+                    onSelected: newValue => { Config.options.appearance.fonts.iconNerd = newValue }
                 }
-
-                ConfigTextArea {
-                    id: readingFontField
+                ConfigComboBox {
                     Layout.fillWidth: true
                     buttonIcon: "book_ribbon"
-                    text: Translation.tr("Reading font name (e.g., Readex Pro)")
-                    value: Config.options.appearance.fonts.reading
-                    onValueChanged: {
-                        readingFontDebounceTimer.restart();
-                    }
-
-                    Timer {
-                        id: readingFontDebounceTimer
-                        interval: 1000
-                        running: false
-                        onTriggered: {
-                            Config.options.appearance.fonts.reading = readingFontField.value;
-                        }
-                    }
+                    text: Translation.tr("Reading font")
+                    fieldWidth: 260
+                    fixedWidth: true
+                    searchable: true
+                    model: SystemAppearance.fontOptions(Config.options.appearance.fonts.reading)
+                    currentValue: Config.options.appearance.fonts.reading
+                    onSelected: newValue => { Config.options.appearance.fonts.reading = newValue }
                 }
-
-                ConfigTextArea {
-                    id: expressiveFontField
+                ConfigComboBox {
                     Layout.fillWidth: true
                     buttonIcon: "mood_heart"
-                    text: Translation.tr("Expressive font name (e.g., Space Grotesk)")
-                    value: Config.options.appearance.fonts.expressive
-                    onValueChanged: {
-                        expressiveFontDebounceTimer.restart();
-                    }
-
-                    Timer {
-                        id: expressiveFontDebounceTimer
-                        interval: 1000
-                        running: false
-                        onTriggered: {
-                            Config.options.appearance.fonts.expressive = expressiveFontField.value;
-                        }
-                    }
+                    text: Translation.tr("Expressive font")
+                    fieldWidth: 260
+                    fixedWidth: true
+                    searchable: true
+                    model: SystemAppearance.fontOptions(Config.options.appearance.fonts.expressive)
+                    currentValue: Config.options.appearance.fonts.expressive
+                    onSelected: newValue => { Config.options.appearance.fonts.expressive = newValue }
                 }
             }
         }

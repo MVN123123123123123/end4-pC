@@ -18,26 +18,6 @@ ContentPage {
     baseWidth: !isMinimal ? 700 : 600
     bottomContentPadding: 35
 
-    function goTo(term) {
-        const t = term.toLowerCase().trim()
-        function findTarget(rootItem) {
-            for (let i = 0; i < rootItem.children.length; i++) {
-                let child = rootItem.children[i]
-                if (child.title && child.title.toLowerCase().includes(t)) return child
-            }
-            for (let i = 0; i < rootItem.children.length; i++) {
-                let found = findTarget(rootItem.children[i])
-                if (found) return found
-            }
-            return null
-        }
-        let target = findTarget(mainLayout)
-        if (target) {
-            let pos = target.mapToItem(mainLayout, 0, 0)
-            page.contentY = Math.max(0, pos.y - 0)
-        }
-    }
-
     component SmallLightDarkPreferenceButton: RippleButton {
         id: smallLightDarkPreferenceButton
         required property bool dark
@@ -466,7 +446,8 @@ ContentPage {
                                     { displayName: Translation.tr("Float"), icon: "view_day", value: 1 },
                                     { displayName: Translation.tr("Islands"), icon: "crop_3_2", value: 2 },
                                     { displayName: Translation.tr("M3"), icon: "interests", value: 3 },
-                                    { displayName: Translation.tr("Panel"), icon: "toolbar", value: 4 }
+                                    { displayName: Translation.tr("M3 Hug"), icon: "category", value: 4 },
+                                    { displayName: Translation.tr("Panel"), icon: "toolbar", value: 5 }
                                 ]
                                 isCurrentValue: value => Config.options.bar.cornerStyle === value
                                 pickValue: value => {

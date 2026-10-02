@@ -216,40 +216,9 @@ Item {
                                 }
                                 spacing: 1
 
-                                Rectangle {
-                                    id: avatarRect
-                                    width: 48; height: 48; radius: width / 2
-                                    color: Appearance.colors.colPrimaryContainer
-
-                                    Image {
-                                        id: avatarImage
-                                        anchors.fill: parent
-                                        source: Config.options.profile.avatarPath !== "" 
-                                            ? "file://" + Config.options.profile.avatarPicture 
-                                            : "file:///home/" + (Quickshell.env("USER") ?? "user") + "/.face"
-                                        sourceSize.width: avatarImage.width * 2
-                                        sourceSize.height: avatarImage.height * 2
-                                        fillMode: Image.PreserveAspectCrop
-                                        layer.enabled: true
-                                        layer.effect: OpacityMask {
-                                            maskSource: Rectangle {
-                                                width: avatarRect.width
-                                                height: avatarRect.height
-                                                radius: avatarRect.radius
-                                            }
-                                        }
-                                        onStatusChanged: {
-                                            if (status === Image.Error) visible = false
-                                        }
-                                    }
-
-                                    MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        text: "account_circle"
-                                        iconSize: 32
-                                        color: Appearance.colors.colOnPrimaryContainer
-                                        visible: avatarImage.status === Image.Error
-                                    }
+                                UserAvatar {
+                                    width: 48
+                                    height: 48
                                 }
 
                                 StyledText {
@@ -505,6 +474,7 @@ Item {
                         id: distroIcon
                         anchors.fill: parent
                         source: Config.options.custom.distroIcon || SystemInfo.distroIcon
+                        customFolder: Config.options.custom.iconsPath
                         colorize: Config.options.custom.colorizeIcon
                         color: Appearance.colors.colOnLayer0
                     }
